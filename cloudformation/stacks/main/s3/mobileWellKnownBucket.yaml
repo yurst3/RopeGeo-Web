@@ -34,7 +34,7 @@ Resources:
                     'Fn::GetAtt': MobileWellKnownBucket.Arn
             Condition:
               StringEquals:
-                'AWS:SourceArn':
+                'aws:SourceArn':
                   Ref: MobileCloudFrontDistributionArn
 
 Outputs:

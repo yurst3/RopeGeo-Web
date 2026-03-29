@@ -46,7 +46,7 @@ Resources:
                         'Fn::GetAtt': LandingSiteBucket.Arn
                 Condition:
                   StringEquals:
-                    'AWS:SourceArn':
+                    'aws:SourceArn':
                       Ref: LandingCloudFrontDistributionArn
               - Ref: 'AWS::NoValue'
 
