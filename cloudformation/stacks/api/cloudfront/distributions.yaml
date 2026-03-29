@@ -12,26 +12,6 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
-  ExplorePageCachePolicy:
-    Type: AWS::CloudFront::CachePolicy
-    Properties:
-      CachePolicyConfig:
-        Comment: Cache explore HTML at edge; key includes full path and all query strings
-        DefaultTTL: 60
-        MaxTTL: 300
-        MinTTL: 0
-        Name:
-          'Fn::Sub': '${AWS::StackName}-explore-page'
-        ParametersInCacheKeyAndForwardedToOrigin:
-          CookiesConfig:
-            CookieBehavior: none
-          EnableAcceptEncodingBrotli: true
-          EnableAcceptEncodingGzip: true
-          HeadersConfig:
-            HeaderBehavior: none
-          QueryStringsConfig:
-            QueryStringBehavior: all
-
   LandingDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -217,6 +197,8 @@ Resources:
             Compress: true
             CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
           # One '*' = one path segment; /explore/* matches only /explore/{id}, not /explore/{id}/page
+          # Managed-CachingOptimized (no cloudfront:CreateCachePolicy on pipeline role). Path is in cache key;
+          # query strings are not — rare og:url mismatch if same page id with different ?query on first request wins in edge cache.
           - PathPattern: '/explore/*/page'
             TargetOriginId: ExploreHttpApiOrigin
             ViewerProtocolPolicy: redirect-to-https
@@ -232,8 +214,7 @@ Resources:
               - GET
               - HEAD
             Compress: true
-            CachePolicyId:
-              Ref: ExplorePageCachePolicy
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
             OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
 
 Outputs:

@@ -18,7 +18,7 @@ const corsHeaders = (): Record<string, string> => ({
     'access-control-allow-origin': '*',
 });
 
-/** Align with mobile CloudFront ExplorePageCachePolicy (DefaultTTL / MaxTTL). */
+/** Browsers + shared caches; edge uses managed CachingOptimized (see mobile distribution comment). */
 const explorePageOkCacheControl = 'public, max-age=60, s-maxage=120, stale-while-revalidate=300';
 
 /**
