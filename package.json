@@ -30,7 +30,8 @@
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-web": "~0.21.0",
-    "ropegeo-common": "^1.6.0"
+    "ropegeo-common": "^1.6.0",
+    "esbuild": "^0.27.2"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
@@ -42,7 +43,6 @@
     "@types/react": "~19.1.0",
     "babel-preset-expo": "~54.0.0",
     "cloudformation-yml-merger": "^1.0.5",
-    "esbuild": "^0.27.2",
     "jest": "^30.2.0",
     "spectral-aws-apigateway-ruleset": "^3.0.1",
     "ts-jest": "^29.2.5",
