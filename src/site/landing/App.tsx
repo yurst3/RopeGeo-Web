@@ -6,7 +6,7 @@ export default function App() {
             <Text style={styles.tagline}>Ur gay lol</Text>
             <View style={styles.imageContainer}>
                 <Image
-                    source={require('./assets/test.png')}
+                    source={require('./assets/test.avif')}
                     style={styles.image}
                     resizeMode="contain"
                     accessibilityLabel="Person in a desert landscape holding a large circular bone in a playful pose."

@@ -109,7 +109,8 @@ Resources:
           Compress: true
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
         CacheBehaviors:
-          - PathPattern: '/explore/*'
+          # One '*' = one path segment; /explore/* matches only /explore/{id}, not /explore/{id}/page
+          - PathPattern: '/explore/*/page'
             TargetOriginId: ExploreHttpApiOrigin
             ViewerProtocolPolicy: redirect-to-https
             AllowedMethods:
