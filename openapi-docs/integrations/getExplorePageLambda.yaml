@@ -4,4 +4,5 @@ GetExplorePageLambdaIntegration:
   uri: arn:aws:apigateway:$env-REGION:lambda:path/2015-03-31/functions/$env-EXPLORE_PAGE_LAMBDA_ARN/invocations
   credentials: $env-APIGATEWAY_INVOKE_LAMBDA_ROLE_ARN
   # Required for HTTP APIs (ApiGatewayV2); without it the integration is not attached to the route
-  payloadFormatVersion: "1.0"
+  # Use 2.0 so the event matches APIGatewayProxyEventV2 (rawPath, requestContext.http). 1.0 omits http and breaks buildOgUrl.
+  payloadFormatVersion: "2.0"

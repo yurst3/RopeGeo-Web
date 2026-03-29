@@ -87,4 +87,26 @@ describe('buildOgUrl', () => {
         );
         expect(url).toBe('https://only-domain.execute-api.us-east-1.amazonaws.com/explore/u/page');
     });
+
+    it('does not throw when requestContext.http is missing (payload 1.0 shape) if path is set', () => {
+        const url = buildOgUrl(
+            baseEvent({
+                rawPath: undefined as unknown as string,
+                path: '/explore/legacy/page',
+                headers: { host: 'mobile.ropegeo.com', 'x-forwarded-proto': 'https' },
+                requestContext: {
+                    accountId: '123',
+                    apiId: 'abc',
+                    domainName: 'abc.execute-api.us-east-1.amazonaws.com',
+                    domainPrefix: 'abc',
+                    requestId: 'id',
+                    routeKey: 'GET /explore/{id}/page',
+                    stage: '$default',
+                    time: '01/Jan/2025:00:00:00 +0000',
+                    timeEpoch: 0,
+                } as APIGatewayProxyEventV2['requestContext'],
+            }),
+        );
+        expect(url).toBe('https://mobile.ropegeo.com/explore/legacy/page');
+    });
 });

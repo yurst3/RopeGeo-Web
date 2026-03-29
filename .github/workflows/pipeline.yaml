@@ -274,7 +274,7 @@ jobs:
           f=docs-build/openapiResolved.yaml
           test -f "$f" || { echo "::error::$f missing"; exit 1; }
           grep -q 'x-amazon-apigateway-integration' "$f" || { echo "::error::$f missing x-amazon-apigateway-integration"; exit 1; }
-          grep -qE 'payloadFormatVersion:.*1\.0' "$f" || { echo "::error::$f missing payloadFormatVersion 1.0 (HTTP API will not attach integration)"; exit 1; }
+          grep -q 'payloadFormatVersion: "2.0"' "$f" || { echo "::error::$f must include payloadFormatVersion 2.0 (explore handler expects APIGatewayProxyEventV2)"; exit 1; }
 
       - name: Upload docs to S3
         run: aws s3 sync docs-build "s3://${{ steps.stack-outputs.outputs.docs_bucket }}/" --delete
