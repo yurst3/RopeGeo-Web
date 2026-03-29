@@ -19,7 +19,7 @@
     "build:openapi": "mkdir -p docs-build && cp openapi-docs/index.html docs-build/index.html && npx @redocly/cli bundle openapi-docs/index.yaml -o docs-build/openapi.yaml --dereferenced && npx @redocly/cli bundle openapi-docs/index.yaml -o docs-build/openapi.json --dereferenced",
     "lint:openapi": "npx @redocly/cli bundle openapi-docs/index.yaml -o docs-build/openapi-bundled.yaml --dereferenced && spectral lint --verbose -r openapi-docs/.spectral.yaml docs-build/openapi-bundled.yaml",
     "build:landing": "node scripts/ensureLandingAssets.cjs && npx expo export --platform web && node scripts/injectLinkPreviewPlaceholder.cjs",
-    "test:unit": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest -i",
+    "test:unit": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npm run typecheck && jest -i",
     "test:deploy": "npm run test:unit"
   },
   "dependencies": {

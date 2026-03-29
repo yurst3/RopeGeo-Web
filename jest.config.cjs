@@ -8,4 +8,8 @@ module.exports = {
         '^.+\\.ts$': 'ts-jest',
     },
     moduleFileExtensions: ['ts', 'js', 'json'],
+    // Match TypeScript nodenext: imports use `.js`; map to extensionless so Jest resolves `.ts` sources.
+    moduleNameMapper: {
+        '^(\\.\\./.*)\\.js$': '$1',
+    },
 };

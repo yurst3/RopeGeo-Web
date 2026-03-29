@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { getS3Object, httpRequest } from 'ropegeo-common/helpers';
-import { handler } from '../../../src/api/getExplorePage/handler';
+import { clearLandingHtmlCacheForTests } from '../../../src/api/getExplorePage/s3/cachedLandingPage.js';
+import { handler } from '../../../src/api/getExplorePage/handler.js';
 import { landingHtmlWithPlaceholder } from './fixtures/landingHtml';
 import { linkPreviewApiEnvelope, linkPreviewResultNoImage } from './fixtures/linkPreviewJson';
 
@@ -49,15 +50,12 @@ function event(overrides: Partial<APIGatewayProxyEventV2> = {}): APIGatewayProxy
 }
 
 describe('getExplorePage handler', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
         jest.clearAllMocks();
         process.env.LANDING_BUCKET_NAME = 'landing-bucket';
         process.env.LANDING_INDEX_KEY = 'index.html';
         process.env.WEBSCRAPER_API_BASE_URL = 'https://api.example.com';
         process.env.LANDING_HTML_CACHE_TTL_SECONDS = '0';
-        const { clearLandingHtmlCacheForTests } = await import(
-            '../../../src/api/getExplorePage/s3/cachedLandingPage'
-        );
         clearLandingHtmlCacheForTests();
     });
 
