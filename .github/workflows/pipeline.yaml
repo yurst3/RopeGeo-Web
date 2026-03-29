@@ -11,9 +11,10 @@ env:
   PROD_MAIN_STACK_NAME: Web-Prod
   PROD_API_STACK_NAME: Web-Api-Prod
   PROD_REGION: us-east-1
-  PROD_PIPELINE_EXECUTION_ROLE: ${{ secrets.PROD_PIPELINE_EXECUTION_ROLE }}
-  PROD_CLOUDFORMATION_EXECUTION_ROLE: ${{ secrets.PROD_CLOUDFORMATION_EXECUTION_ROLE }}
-  PROD_ARTIFACTS_BUCKET: ${{ secrets.PROD_ARTIFACTS_BUCKET }}
+  PROD_PIPELINE_EXECUTION_ROLE: arn:aws:iam::410170143634:role/aws-sam-cli-managed-productio-PipelineExecutionRole-FRy7F5j0k91U
+  PROD_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::410170143634:role/aws-sam-cli-managed-produ-CloudFormationExecutionRo-YIlb8V9GNR1Y
+  PROD_ARTIFACTS_BUCKET: aws-sam-cli-managed-production-pip-artifactsbucket-ixo4vubbqj28
+  WEBSCRAPER_API_BASE_URL: https://api.webscraper.ropegeo.com
 
 jobs:
   test:
