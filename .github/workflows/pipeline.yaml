@@ -269,6 +269,13 @@ jobs:
           APIGATEWAY_INVOKE_LAMBDA_ROLE_ARN=${{ steps.stack-outputs.outputs.invoke_role }} \
           npx ts-node --files scripts/resolveYamlEnvs.ts docs-build/openapi.yaml docs-build/openapiResolved.yaml
 
+      - name: Verify resolved OpenAPI has API Gateway Lambda integration fields
+        run: |
+          f=docs-build/openapiResolved.yaml
+          test -f "$f" || { echo "::error::$f missing"; exit 1; }
+          grep -q 'x-amazon-apigateway-integration' "$f" || { echo "::error::$f missing x-amazon-apigateway-integration"; exit 1; }
+          grep -qE 'payloadFormatVersion:.*1\.0' "$f" || { echo "::error::$f missing payloadFormatVersion 1.0 (HTTP API will not attach integration)"; exit 1; }
+
       - name: Upload docs to S3
         run: aws s3 sync docs-build "s3://${{ steps.stack-outputs.outputs.docs_bucket }}/" --delete
 
@@ -348,6 +355,27 @@ jobs:
             --capabilities CAPABILITY_IAM \
             --region "${PROD_REGION}" \
             --no-fail-on-empty-changeset
+
+      # CloudFormation BodyS3Location does not re-pull S3 when the template is unchanged; WebScraper uses the same pattern.
+      - name: Re-import HTTP API from OpenAPI (openapiResolved.yaml in S3)
+        run: |
+          set -e
+          API_ID=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_API_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='RopeGeoWebApiId'].OutputValue" \
+            --output text | tr -d '\n\r')
+          if [ -z "$API_ID" ] || [ "$API_ID" = "None" ]; then
+            echo "::error::RopeGeoWebApiId output missing from API stack."
+            exit 1
+          fi
+          DOCS="${{ steps.buckets.outputs.docs }}"
+          aws s3 cp "s3://${DOCS}/openapiResolved.yaml" openapiResolved.yaml
+          aws apigatewayv2 reimport-api \
+            --api-id "${API_ID}" \
+            --body file://openapiResolved.yaml \
+            --region "${PROD_REGION}"
+          echo "Re-imported API ${API_ID} from s3://${DOCS}/openapiResolved.yaml"
 
   update-prod-main-cloudfront-refs:
     if: github.ref == 'refs/heads/master'
