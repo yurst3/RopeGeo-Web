@@ -73,7 +73,10 @@ Resources:
           'Fn::If':
             - CreateMobileWithTls
             - AcmCertificateArn:
-                Ref: AcmCertificateArn
+                'Fn::If':
+                  - HasMobileAcmCertificate
+                  - Ref: MobileAcmCertificateArn
+                  - Ref: AcmCertificateArn
               SslSupportMethod: sni-only
               MinimumProtocolVersion: TLSv1.2_2021
             - CloudFrontDefaultCertificate: true

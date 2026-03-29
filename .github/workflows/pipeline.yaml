@@ -157,8 +157,6 @@ jobs:
           role-skip-session-tagging: true
 
       - name: Deploy main stack (S3, explore Lambda, IAM)
-        env:
-          WEBSCRAPER_API_BASE: ${{ secrets.WEBSCRAPER_API_BASE_URL }}
         run: |
           set -e
           API_BASE="${WEBSCRAPER_API_BASE:-https://api.webscraper.ropegeo.com}"
@@ -326,13 +324,16 @@ jobs:
 
       - name: Deploy API + CloudFront stacks
         env:
-          LANDING_DOMAIN: ${{ secrets.LANDING_CUSTOM_DOMAIN }}
-          MOBILE_DOMAIN: ${{ secrets.MOBILE_CUSTOM_DOMAIN }}
+          # Script reads LANDING_DOMAIN / MOBILE_DOMAIN (workflow env uses *_CUSTOM_DOMAIN names)
+          LANDING_DOMAIN: ${{ env.LANDING_CUSTOM_DOMAIN }}
+          MOBILE_DOMAIN: ${{ env.MOBILE_CUSTOM_DOMAIN }}
           ACM_ARN: ${{ secrets.ROPEGEO_WEB_ACM_CERTIFICATE_ARN }}
+          MOBILE_ACM_ARN: ${{ secrets.ROPEGEO_WEB_MOBILE_ACM_CERTIFICATE_ARN }}
         run: |
           LANDING_DOMAIN="${LANDING_DOMAIN:-}"
           MOBILE_DOMAIN="${MOBILE_DOMAIN:-}"
           ACM_ARN="${ACM_ARN:-}"
+          MOBILE_ACM_ARN="${MOBILE_ACM_ARN:-}"
           aws cloudformation deploy \
             --template-file cloudformation/stacks/mergedApiTemplate.yaml \
             --stack-name "${PROD_API_STACK_NAME}" \
@@ -343,6 +344,7 @@ jobs:
               "LandingCustomDomain=${LANDING_DOMAIN}" \
               "MobileCustomDomain=${MOBILE_DOMAIN}" \
               "AcmCertificateArn=${ACM_ARN}" \
+              "MobileAcmCertificateArn=${MOBILE_ACM_ARN}" \
             --capabilities CAPABILITY_IAM \
             --region "${PROD_REGION}" \
             --no-fail-on-empty-changeset

@@ -22,7 +22,8 @@ Create these **Actions secrets** (names match `pipeline.yaml`; adjust the workfl
 | `WEBSCRAPER_API_BASE_URL` | Optional. Base URL for WebScraper **without** trailing slash. If unset, the workflow defaults to `https://api.webscraper.ropegeo.com`. |
 | `LANDING_CUSTOM_DOMAIN` | Optional. e.g. `ropegeo.com` — leave **empty** until ACM + DNS are ready; CloudFront will use the default `*.cloudfront.net` hostname. |
 | `MOBILE_CUSTOM_DOMAIN` | Optional. e.g. `mobile.ropegeo.com`. |
-| `ROPEGEO_WEB_ACM_CERTIFICATE_ARN` | **ACM certificate ARN in `us-east-1`** covering the custom hostnames above (SANs or wildcard). Required **only if** you set custom domains. |
+| `ROPEGEO_WEB_ACM_CERTIFICATE_ARN` | **ACM certificate ARN in `us-east-1`** for the **landing** distribution (must cover `LANDING_CUSTOM_DOMAIN`). Required when that domain is set. |
+| `ROPEGEO_WEB_MOBILE_ACM_CERTIFICATE_ARN` | Optional. Separate ACM ARN in `us-east-1` for **mobile** CloudFront when `mobile.ropegeo.com` is on its **own** certificate. If omitted, mobile reuses `ROPEGEO_WEB_ACM_CERTIFICATE_ARN` (must then include the mobile hostname in SANs). |
 
 ### IAM capabilities the pipeline role needs (summary)
 
@@ -60,7 +61,7 @@ If step 5 reports “No updates are to be performed”, the ARNs already match; 
 
 1. In **ACM (us-east-1)**, request or import a certificate that includes **`ropegeo.com`**, **`mobile.ropegeo.com`**, or a suitable wildcard (e.g. `*.ropegeo.com` + apex, per your DNS strategy).
 2. Complete **DNS validation** (CNAME records in Route 53 or your DNS host).
-3. Put the certificate **ARN** in `ROPEGEO_WEB_ACM_CERTIFICATE_ARN`.
+3. Put the **landing** certificate ARN in `ROPEGEO_WEB_ACM_CERTIFICATE_ARN`. If mobile uses a **different** issued cert, set `ROPEGEO_WEB_MOBILE_ACM_CERTIFICATE_ARN` to that ARN as well.
 4. Create **Route 53 alias A/AAAA** (or equivalent) records:
    - **Landing** distribution → apex (or `www`, per your choice).
    - **Mobile** distribution → `mobile.ropegeo.com`.

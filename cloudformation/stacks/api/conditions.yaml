@@ -16,6 +16,15 @@ Conditions:
       - 'Fn::Equals':
           - Ref: AcmCertificateArn
           - ''
+  HasMobileAcmCertificate:
+    'Fn::Not':
+      - 'Fn::Equals':
+          - Ref: MobileAcmCertificateArn
+          - ''
+  HasMobileViewerCertificate:
+    'Fn::Or':
+      - Condition: HasAcmCertificate
+      - Condition: HasMobileAcmCertificate
   CreateLandingWithTls:
     'Fn::And':
       - Condition: HasLandingCustomDomain
@@ -23,4 +32,4 @@ Conditions:
   CreateMobileWithTls:
     'Fn::And':
       - Condition: HasMobileCustomDomain
-      - Condition: HasAcmCertificate
+      - Condition: HasMobileViewerCertificate

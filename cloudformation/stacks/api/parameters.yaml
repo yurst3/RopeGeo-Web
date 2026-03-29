@@ -21,4 +21,8 @@ Parameters:
   AcmCertificateArn:
     Type: String
     Default: ''
-    Description: ACM certificate ARN in us-east-1 covering the custom domain(s) above (SANs or wildcard)
+    Description: ACM certificate ARN in us-east-1 for the landing distribution (and for mobile if MobileAcmCertificateArn is omitted)
+  MobileAcmCertificateArn:
+    Type: String
+    Default: ''
+    Description: Optional separate ACM ARN (us-east-1) for the mobile distribution; when empty, mobile uses AcmCertificateArn
