@@ -1,0 +1,51 @@
+# /explore/{id}/page
+get:
+  summary: Page shell with Open Graph meta
+  description: Returns the landing index.html from S3 with LinkPreview meta tags injected for the given Ropewiki page id.
+  operationId: getExplorePage
+  tags:
+    - explore
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: RopewikiPage UUID
+      schema:
+        type: string
+        format: uuid
+  x-amazon-apigateway-integration:
+    $ref: '../integrations/getExplorePageLambda.yaml#/GetExplorePageLambdaIntegration'
+  responses:
+    '200':
+      description: HTML document
+      content:
+        text/html:
+          schema:
+            $ref: '../components/getExplorePageResponse.yaml#/GetExplorePageHtmlBody'
+          examples:
+            getExplorePageResponse:
+              $ref: '../examples/getExplorePageResponse.yaml'
+    '400':
+      description: Bad request (invalid or missing id)
+      content:
+        text/html:
+          schema:
+            $ref: '../components/getExplorePageResponse.yaml#/GetExplorePageHtmlBody'
+    '404':
+      description: Page or preview not found
+      content:
+        text/html:
+          schema:
+            $ref: '../components/getExplorePageResponse.yaml#/GetExplorePageHtmlBody'
+    '500':
+      description: Internal error
+      content:
+        text/html:
+          schema:
+            $ref: '../components/getExplorePageResponse.yaml#/GetExplorePageHtmlBody'
+    '502':
+      description: Upstream WebScraper error
+      content:
+        text/html:
+          schema:
+            $ref: '../components/getExplorePageResponse.yaml#/GetExplorePageHtmlBody'

@@ -1,0 +1,51 @@
+{
+  "name": "ropegeo-web",
+  "version": "0.1.0",
+  "description": "RopeGeo landing (ropegeo.com) and mobile deep-link / explore HTML (mobile.ropegeo.com)",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "src/site/landing/index.ts",
+  "scripts": {
+    "start": "expo start",
+    "web": "expo start --web",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "merge:main-template": "npx ts-node --files scripts/mergeTemplate.ts cloudformation/stacks/main cloudformation/stacks/mergedMainTemplate.yaml RopeGeoWeb --fix-transform",
+    "merge:api-template": "npx ts-node --files scripts/mergeTemplate.ts cloudformation/stacks/api cloudformation/stacks/mergedApiTemplate.yaml \"RopeGeo-Web HTTP API and CloudFront (OpenAPI from docs bucket)\"",
+    "lint:main-template": "npm run merge:main-template && sam validate --template cloudformation/stacks/mergedMainTemplate.yaml",
+    "lint:api-template": "npm run merge:api-template && sam validate --template cloudformation/stacks/mergedApiTemplate.yaml",
+    "build:openapi": "mkdir -p docs-build && cp openapi-docs/index.html docs-build/index.html && npx @redocly/cli bundle openapi-docs/index.yaml -o docs-build/openapi.yaml --dereferenced && npx @redocly/cli bundle openapi-docs/index.yaml -o docs-build/openapi.json --dereferenced",
+    "lint:openapi": "npx @redocly/cli bundle openapi-docs/index.yaml -o docs-build/openapi-bundled.yaml --dereferenced && spectral lint --verbose -r openapi-docs/.spectral.yaml docs-build/openapi-bundled.yaml",
+    "build:landing": "node scripts/ensureLandingAssets.cjs && npx expo export --platform web && node scripts/injectLinkPreviewPlaceholder.cjs",
+    "test:unit": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest -i",
+    "test:deploy": "npm run test:unit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.971.0",
+    "expo": "~54.0.33",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-web": "~0.21.0",
+    "ropegeo-common": "^1.6.0"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@redocly/cli": "^2.22.1",
+    "@stoplight/spectral-cli": "^6.15.0",
+    "@types/aws-lambda": "^8.10.159",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^24.10.2",
+    "@types/react": "~19.1.0",
+    "babel-preset-expo": "~54.0.0",
+    "cloudformation-yml-merger": "^1.0.5",
+    "jest": "^30.2.0",
+    "spectral-aws-apigateway-ruleset": "^3.0.1",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.3"
+  }
+}

@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack conditions
+
+Conditions:
+  HasDocsBucketPipelineRole:
+    'Fn::Not':
+      - 'Fn::Equals':
+          - Ref: DocsBucketPipelineRoleArn
+          - ''
+  HasLandingCloudFront:
+    'Fn::Not':
+      - 'Fn::Equals':
+          - Ref: LandingCloudFrontDistributionArn
+          - ''
+  HasMobileCloudFront:
+    'Fn::Not':
+      - 'Fn::Equals':
+          - Ref: MobileCloudFrontDistributionArn
+          - ''

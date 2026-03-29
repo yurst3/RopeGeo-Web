@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "rootDir": "./",
+    "module": "nodenext",
+    "target": "esnext",
+    "lib": ["esnext", "dom"],
+    "jsx": "react-jsx",
+    "sourceMap": true,
+    "noUncheckedIndexedAccess": true,
+    "strict": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*", "test/**/*", "scripts/**/*"],
+  "exclude": ["node_modules"]
+}

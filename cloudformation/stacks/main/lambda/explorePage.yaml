@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda for GET /explore/{id}/page (HTML + Open Graph)
+
+Resources:
+  ExplorePage:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Description: Serves landing shell with injected LinkPreview meta for crawlers and browsers
+      Runtime: nodejs22.x
+      Architectures:
+        - arm64
+      Role:
+        'Fn::GetAtt': ExplorePageRole.Arn
+      CodeUri: ../../
+      Handler: src/api/getExplorePage/handler.handler
+      MemorySize: 256
+      Timeout: 30
+      Environment:
+        Variables:
+          LANDING_BUCKET_NAME:
+            Ref: LandingSiteBucket
+          LANDING_INDEX_KEY: index.html
+          WEBSCRAPER_API_BASE_URL:
+            Ref: WebScraperApiBaseUrl
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: esnext
+        Sourcemap: true
+        EntryPoints:
+          - src/api/getExplorePage/handler.ts
+
+Outputs:
+  ExplorePageLambdaArn:
+    Description: ARN of the ExplorePage Lambda (for OpenAPI resolveYamlEnvs)
+    Value:
+      'Fn::GetAtt': ExplorePage.Arn

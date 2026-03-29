@@ -1,0 +1,7 @@
+summary: Minimal HTML with placeholder replaced by meta tags
+value: |
+  <!DOCTYPE html>
+  <html lang="en"><head><meta charset="utf-8"/>
+  <meta property="og:title" content="Example Canyon AKA Alt" />
+  <meta property="og:url" content="https://mobile.ropegeo.com/explore/uuid/page" />
+  <title>Example</title></head><body></body></html>

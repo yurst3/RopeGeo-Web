@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  DocsBucketName:
+    Type: String
+    Description: S3 bucket containing openapiResolved.yaml (main stack DocsBucketName output)
+  LandingBucketName:
+    Type: String
+    Description: Landing static site bucket (main stack LandingSiteBucketName)
+  MobileWellKnownBucketName:
+    Type: String
+    Description: Mobile well-known bucket (main stack MobileWellKnownBucketName)
+  LandingCustomDomain:
+    Type: String
+    Default: ''
+    Description: Optional custom domain for landing CloudFront (e.g. ropegeo.com)
+  MobileCustomDomain:
+    Type: String
+    Default: ''
+    Description: Optional custom domain for mobile CloudFront (e.g. mobile.ropegeo.com)
+  AcmCertificateArn:
+    Type: String
+    Default: ''
+    Description: ACM certificate ARN in us-east-1 covering the custom domain(s) above (SANs or wildcard)

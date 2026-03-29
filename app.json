@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "RopeGeo",
+    "slug": "ropegeo-landing",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/site/landing/assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./src/site/landing/assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0c4a6e"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/site/landing/assets/adaptive-icon.png",
+        "backgroundColor": "#0c4a6e"
+      }
+    },
+    "web": {
+      "output": "single",
+      "bundler": "metro",
+      "favicon": "./src/site/landing/assets/favicon.png"
+    }
+  }
+}

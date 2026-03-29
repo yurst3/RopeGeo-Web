@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 bucket for static landing site (ropegeo.com origin)
+
+Resources:
+  LandingSiteBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName:
+        'Fn::Sub': 'ropegeo-web-${devEnvironment}-landing'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  LandingSiteBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket:
+        Ref: LandingSiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowExploreLambdaRead
+            Effect: Allow
+            Principal:
+              AWS:
+                'Fn::GetAtt': ExplorePageRole.Arn
+            Action: 's3:GetObject'
+            Resource:
+              'Fn::Sub':
+                - '${BucketArn}/*'
+                - BucketArn:
+                    'Fn::GetAtt': LandingSiteBucket.Arn
+          - 'Fn::If':
+              - HasLandingCloudFront
+              - Sid: AllowLandingCloudFrontOAC
+                Effect: Allow
+                Principal:
+                  Service: cloudfront.amazonaws.com
+                Action:
+                  - 's3:GetObject'
+                Resource:
+                  'Fn::Sub':
+                    - '${BucketArn}/*'
+                    - BucketArn:
+                        'Fn::GetAtt': LandingSiteBucket.Arn
+                Condition:
+                  StringEquals:
+                    'AWS:SourceArn':
+                      Ref: LandingCloudFrontDistributionArn
+              - Ref: 'AWS::NoValue'
+
+Outputs:
+  LandingSiteBucketName:
+    Description: Landing static site bucket (sync Expo export here)
+    Value:
+      Ref: LandingSiteBucket

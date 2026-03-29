@@ -1,0 +1,14 @@
+---
+description: Test layout and Jest for RopeGeo-Web (unit tests only; no DB integration in this repo).
+globs: test/**/*.ts,jest.config.cjs,package.json
+alwaysApply: false
+---
+
+# Tests (RopeGeo-Web)
+
+- **Runner:** Jest with **ts-jest**; config in **`jest.config.cjs`** (`roots: ['<rootDir>/test']`, `testMatch: ['**/*.test.ts']`).
+- **Layout:** Mirror `src/api/<operation>/` under `test/api/<operation>/` (e.g. `getExplorePage/handler.test.ts`).
+- **Unit tests:** Mock **AWS SDK** (`@aws-sdk/client-s3`) and **`global.fetch`**; no real S3 or WebScraper calls. Use `@jest/globals` (`describe`, `it`, `expect`, `jest`, `beforeEach`).
+- **Run:** `npm run test:unit` (or `npm run test:deploy` — same suite here).
+
+This repo does **not** use database integration tests. For handler patterns that include DB mocks and `getDatabaseConnection`, see WebScraper’s tests rule; adapt by omitting DB and VPC.

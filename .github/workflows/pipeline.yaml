@@ -1,0 +1,466 @@
+name: Pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  PIPELINE_USER_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  PIPELINE_USER_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  PROD_MAIN_STACK_NAME: Web-Prod
+  PROD_API_STACK_NAME: Web-Api-Prod
+  PROD_REGION: us-east-1
+  PROD_PIPELINE_EXECUTION_ROLE: ${{ secrets.PROD_PIPELINE_EXECUTION_ROLE }}
+  PROD_CLOUDFORMATION_EXECUTION_ROLE: ${{ secrets.PROD_CLOUDFORMATION_EXECUTION_ROLE }}
+  PROD_ARTIFACTS_BUCKET: ${{ secrets.PROD_ARTIFACTS_BUCKET }}
+
+jobs:
+  test:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Lint main template
+        run: npm run lint:main-template
+        env:
+          SAM_CLI_TELEMETRY: '0'
+          AWS_DEFAULT_REGION: us-east-1
+
+      - name: Lint API template
+        run: npm run lint:api-template
+        env:
+          SAM_CLI_TELEMETRY: '0'
+          AWS_DEFAULT_REGION: us-east-1
+
+      - name: Reject Fn::Condition in merged main template
+        run: |
+          npm run merge:main-template
+          if grep -q "Fn::Condition" cloudformation/stacks/mergedMainTemplate.yaml; then
+            echo "::error::Use Condition not Fn::Condition for condition references"
+            exit 1
+          fi
+
+      - name: Lint OpenAPI docs
+        run: npm run lint:openapi
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Build landing static web export
+        run: npm run build:landing
+
+  build-and-package-main:
+    if: github.ref == 'refs/heads/master'
+    needs: [test]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Merge main template
+        run: npm run merge:main-template
+
+      - name: Reject Fn::Condition in merged main template
+        run: |
+          if grep -q "Fn::Condition" cloudformation/stacks/mergedMainTemplate.yaml; then
+            echo "::error::Use Condition not Fn::Condition for condition references"
+            exit 1
+          fi
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Build SAM application
+        run: sam build --template cloudformation/stacks/mergedMainTemplate.yaml
+
+      - name: Assume prod pipeline role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.PROD_REGION }}
+          role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: ropegeo-web-package
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Package for deployment
+        run: |
+          sam package \
+            --config-env ci \
+            --s3-bucket "${PROD_ARTIFACTS_BUCKET}" \
+            --region "${PROD_REGION}" \
+            --output-template-file packaged-prod.yaml
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packaged-prod-main
+          path: packaged-prod.yaml
+
+  deploy-prod-main:
+    if: github.ref == 'refs/heads/master'
+    needs: [build-and-package-main]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: packaged-prod-main
+
+      - name: Assume prod pipeline role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.PROD_REGION }}
+          role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: ropegeo-web-deploy-main
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Deploy main stack (S3, explore Lambda, IAM)
+        env:
+          WEBSCRAPER_API_BASE: ${{ secrets.WEBSCRAPER_API_BASE_URL }}
+        run: |
+          set -e
+          API_BASE="${WEBSCRAPER_API_BASE:-https://api.webscraper.ropegeo.com}"
+          sam deploy --config-env ci \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --template packaged-prod.yaml \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --region "${PROD_REGION}" \
+            --s3-bucket "${PROD_ARTIFACTS_BUCKET}" \
+            --no-fail-on-empty-changeset \
+            --role-arn "${PROD_CLOUDFORMATION_EXECUTION_ROLE}" \
+            --parameter-overrides \
+              "devEnvironment=production WebScraperApiBaseUrl=${API_BASE} DocsBucketPipelineRoleArn=${PROD_PIPELINE_EXECUTION_ROLE} PipelineExecutionRoleName= LandingCloudFrontDistributionArn= MobileCloudFrontDistributionArn="
+
+  sync-site-assets:
+    if: github.ref == 'refs/heads/master'
+    needs: [deploy-prod-main]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assume prod pipeline role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.PROD_REGION }}
+          role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: ropegeo-web-sync-site
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies and export landing web
+        run: npm ci && npm run build:landing
+
+      - name: Sync landing and mobile well-known buckets
+        run: |
+          LANDING=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='LandingSiteBucketName'].OutputValue" \
+            --output text)
+          MOBILE=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='MobileWellKnownBucketName'].OutputValue" \
+            --output text)
+          aws s3 sync dist/ "s3://${LANDING}/" --delete
+          aws s3 sync src/site/mobile-well-known/ "s3://${MOBILE}/" --delete
+
+  upload-api-docs:
+    if: github.ref == 'refs/heads/master'
+    needs: [deploy-prod-main]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build OpenAPI bundle
+        run: npm run build:openapi
+
+      - name: Assume prod pipeline role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.PROD_REGION }}
+          role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: ropegeo-web-upload-docs
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Read main stack outputs for OpenAPI resolution
+        id: stack-outputs
+        run: |
+          BUCKET=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='DocsBucketName'].OutputValue" \
+            --output text)
+          EXPLORE_ARN=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='ExplorePageLambdaArn'].OutputValue" \
+            --output text)
+          INVOKE_ROLE=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiGatewayInvokeLambdaRoleArn'].OutputValue" \
+            --output text)
+          echo "docs_bucket=${BUCKET}" >> "$GITHUB_OUTPUT"
+          echo "explore_arn=${EXPLORE_ARN}" >> "$GITHUB_OUTPUT"
+          echo "invoke_role=${INVOKE_ROLE}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve OpenAPI placeholders to openapiResolved.yaml
+        run: |
+          REGION=${{ env.PROD_REGION }} \
+          EXPLORE_PAGE_LAMBDA_ARN=${{ steps.stack-outputs.outputs.explore_arn }} \
+          APIGATEWAY_INVOKE_LAMBDA_ROLE_ARN=${{ steps.stack-outputs.outputs.invoke_role }} \
+          npx ts-node --files scripts/resolveYamlEnvs.ts docs-build/openapi.yaml docs-build/openapiResolved.yaml
+
+      - name: Upload docs to S3
+        run: aws s3 sync docs-build "s3://${{ steps.stack-outputs.outputs.docs_bucket }}/" --delete
+
+  deploy-prod-api:
+    if: github.ref == 'refs/heads/master'
+    needs: [upload-api-docs, sync-site-assets]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Assume prod pipeline role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.PROD_REGION }}
+          role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: ropegeo-web-deploy-api
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Load bucket names from main stack
+        id: buckets
+        run: |
+          DOCS=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='DocsBucketName'].OutputValue" \
+            --output text)
+          LANDING=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='LandingSiteBucketName'].OutputValue" \
+            --output text)
+          MOBILE=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='MobileWellKnownBucketName'].OutputValue" \
+            --output text)
+          echo "docs=${DOCS}" >> "$GITHUB_OUTPUT"
+          echo "landing=${LANDING}" >> "$GITHUB_OUTPUT"
+          echo "mobile=${MOBILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Merge API template
+        run: npm run merge:api-template
+
+      - name: Deploy API + CloudFront stacks
+        env:
+          LANDING_DOMAIN: ${{ secrets.LANDING_CUSTOM_DOMAIN }}
+          MOBILE_DOMAIN: ${{ secrets.MOBILE_CUSTOM_DOMAIN }}
+          ACM_ARN: ${{ secrets.ROPEGEO_WEB_ACM_CERTIFICATE_ARN }}
+        run: |
+          LANDING_DOMAIN="${LANDING_DOMAIN:-}"
+          MOBILE_DOMAIN="${MOBILE_DOMAIN:-}"
+          ACM_ARN="${ACM_ARN:-}"
+          aws cloudformation deploy \
+            --template-file cloudformation/stacks/mergedApiTemplate.yaml \
+            --stack-name "${PROD_API_STACK_NAME}" \
+            --parameter-overrides \
+              "DocsBucketName=${{ steps.buckets.outputs.docs }}" \
+              "LandingBucketName=${{ steps.buckets.outputs.landing }}" \
+              "MobileWellKnownBucketName=${{ steps.buckets.outputs.mobile }}" \
+              "LandingCustomDomain=${LANDING_DOMAIN}" \
+              "MobileCustomDomain=${MOBILE_DOMAIN}" \
+              "AcmCertificateArn=${ACM_ARN}" \
+            --capabilities CAPABILITY_IAM \
+            --region "${PROD_REGION}" \
+            --no-fail-on-empty-changeset
+
+  update-prod-main-cloudfront-refs:
+    if: github.ref == 'refs/heads/master'
+    needs: [deploy-prod-api]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assume prod pipeline role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.PROD_REGION }}
+          role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: ropegeo-web-update-main-cf
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Update main stack with CloudFront distribution ARNs (S3 OAC)
+        run: |
+          set -e
+          LANDING_CF=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_API_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='LandingCloudFrontDistributionArn'].OutputValue" \
+            --output text | tr -d '\n\r')
+          MOBILE_CF=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_API_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='MobileCloudFrontDistributionArn'].OutputValue" \
+            --output text | tr -d '\n\r')
+          if [ -z "$LANDING_CF" ] || [ "$LANDING_CF" = "None" ] || [ -z "$MOBILE_CF" ] || [ "$MOBILE_CF" = "None" ]; then
+            echo "::error::Missing CloudFront ARNs from API stack outputs."
+            exit 1
+          fi
+          aws cloudformation get-template \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --output json > get-template-response.json
+          jq -r '.TemplateBody // empty' get-template-response.json > main-current-template.yaml
+          if [ ! -s main-current-template.yaml ]; then
+            URL=$(jq -r '.TemplateUrl // empty' get-template-response.json)
+            if [ -n "$URL" ]; then
+              curl -sSfL "${URL}" -o main-current-template.yaml
+            else
+              echo "::error::Could not retrieve main stack template."
+              exit 1
+            fi
+          fi
+          rm -f get-template-response.json
+          if head -1 main-current-template.yaml | grep -q '^https\?://'; then
+            curl -sSfL "$(cat main-current-template.yaml)" -o main-current-template.yaml
+          fi
+          aws s3 cp main-current-template.yaml \
+            "s3://${PROD_ARTIFACTS_BUCKET}/ropegeo-web-main-template-update.yaml" \
+            --region "${PROD_REGION}"
+          TEMPLATE_URL="https://${PROD_ARTIFACTS_BUCKET}.s3.${PROD_REGION}.amazonaws.com/ropegeo-web-main-template-update.yaml"
+          PARAM_KEYS=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query 'Stacks[0].Parameters[*].ParameterKey' \
+            --output text)
+          PARAM_ARGS=()
+          for key in $PARAM_KEYS; do
+            if [ "$key" = "LandingCloudFrontDistributionArn" ]; then
+              PARAM_ARGS+=( "ParameterKey=${key},ParameterValue=${LANDING_CF}" )
+            elif [ "$key" = "MobileCloudFrontDistributionArn" ]; then
+              PARAM_ARGS+=( "ParameterKey=${key},ParameterValue=${MOBILE_CF}" )
+            else
+              PARAM_ARGS+=( "ParameterKey=${key},UsePreviousValue=true" )
+            fi
+          done
+          set +e
+          UPDATE_ERR=$(aws cloudformation update-stack \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --template-url "${TEMPLATE_URL}" \
+            --parameters "${PARAM_ARGS[@]}" \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --region "${PROD_REGION}" 2>&1)
+          UPDATE_RC=$?
+          set -e
+          if [ "$UPDATE_RC" -ne 0 ]; then
+            if echo "$UPDATE_ERR" | grep -q "No updates are to be performed"; then
+              echo "Main stack already has these CloudFront ARNs; skipping wait."
+              exit 0
+            fi
+            echo "$UPDATE_ERR"
+            exit "$UPDATE_RC"
+          fi
+          aws cloudformation wait stack-update-complete \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}"
+
+  invalidate-prod-cloudfront:
+    if: github.ref == 'refs/heads/master'
+    needs: [update-prod-main-cloudfront-refs]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assume prod pipeline role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.PROD_REGION }}
+          role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: ropegeo-web-invalidate-cf
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Invalidate landing and mobile distributions
+        run: |
+          LANDING_ID=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_API_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='LandingCloudFrontDistributionId'].OutputValue" \
+            --output text)
+          MOBILE_ID=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_API_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Outputs[?OutputKey=='MobileCloudFrontDistributionId'].OutputValue" \
+            --output text)
+          aws cloudfront create-invalidation \
+            --distribution-id "${LANDING_ID}" \
+            --paths "/*"
+          aws cloudfront create-invalidation \
+            --distribution-id "${MOBILE_ID}" \
+            --paths "/*"

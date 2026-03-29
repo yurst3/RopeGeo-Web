@@ -1,0 +1,11 @@
+node_modules/
+docs-build/
+.aws-sam/
+packaged-*.yaml
+cloudformation/stacks/mergedMainTemplate.yaml
+cloudformation/stacks/mergedApiTemplate.yaml
+.DS_Store
+*.log
+.expo/
+dist/
+web-build/

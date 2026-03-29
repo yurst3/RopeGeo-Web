@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Shared stack parameters
+
+Parameters:
+  devEnvironment:
+    Type: String
+    Description: Environment name (dev or production)
+    AllowedValues:
+      - dev
+      - production
+  WebScraperApiBaseUrl:
+    Type: String
+    Description: Base URL for WebScraper HTTP API (no trailing slash), e.g. https://api.webscraper.ropegeo.com
+    Default: 'https://api.webscraper.ropegeo.com'
+  DocsBucketPipelineRoleArn:
+    Type: String
+    Description: IAM role ARN allowed to upload OpenAPI artifacts to the docs bucket (GitHub pipeline execution role).
+    Default: ''
+  PipelineExecutionRoleName:
+    Type: String
+    Description: IAM role name (not ARN) of the pipeline role; used for optional CloudFront invalidation policy attachment.
+    Default: ''
+  LandingCloudFrontDistributionArn:
+    Type: String
+    Description: CloudFront distribution ARN for ropegeo.com landing (from API stack). Leave empty until after first API deploy; then set so the landing bucket allows OAC reads.
+    Default: ''
+  MobileCloudFrontDistributionArn:
+    Type: String
+    Description: CloudFront distribution ARN for mobile.ropegeo.com (from API stack). Leave empty until after first API deploy.
+    Default: ''

@@ -1,0 +1,3 @@
+GetExplorePageHtmlBody:
+  type: string
+  description: HTML document (UTF-8). Successful responses include injected og:* meta tags at the LINK_PREVIEW_HEAD placeholder when present.

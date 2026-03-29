@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Landing and mobile CloudFront distributions (S3 + HTTP API origin)
+
+Resources:
+  RopeGeoWebOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name:
+          'Fn::Sub': '${AWS::StackName}-oac'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  LandingDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: RopeGeo landing (ropegeo.com)
+        Enabled: true
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        Aliases:
+          'Fn::If':
+            - CreateLandingWithTls
+            - - Ref: LandingCustomDomain
+            - []
+        ViewerCertificate:
+          'Fn::If':
+            - CreateLandingWithTls
+            - AcmCertificateArn:
+                Ref: AcmCertificateArn
+              SslSupportMethod: sni-only
+              MinimumProtocolVersion: TLSv1.2_2021
+            - CloudFrontDefaultCertificate: true
+        Origins:
+          - Id: LandingS3Origin
+            DomainName:
+              'Fn::Sub': '${LandingBucketName}.s3.${AWS::Region}.amazonaws.com'
+            OriginAccessControlId:
+              'Fn::GetAtt':
+                - RopeGeoWebOAC
+                - Id
+            S3OriginConfig: {}
+        DefaultCacheBehavior:
+          TargetOriginId: LandingS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+
+  MobileDistribution:
+    Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - RopeGeoWebApiStage
+    Properties:
+      DistributionConfig:
+        Comment: RopeGeo mobile (well-known + explore HTML)
+        Enabled: true
+        DefaultRootObject: ''
+        HttpVersion: http2and3
+        Aliases:
+          'Fn::If':
+            - CreateMobileWithTls
+            - - Ref: MobileCustomDomain
+            - []
+        ViewerCertificate:
+          'Fn::If':
+            - CreateMobileWithTls
+            - AcmCertificateArn:
+                Ref: AcmCertificateArn
+              SslSupportMethod: sni-only
+              MinimumProtocolVersion: TLSv1.2_2021
+            - CloudFrontDefaultCertificate: true
+        Origins:
+          - Id: MobileWellKnownS3Origin
+            DomainName:
+              'Fn::Sub': '${MobileWellKnownBucketName}.s3.${AWS::Region}.amazonaws.com'
+            OriginAccessControlId:
+              'Fn::GetAtt':
+                - RopeGeoWebOAC
+                - Id
+            S3OriginConfig: {}
+          - Id: ExploreHttpApiOrigin
+            DomainName:
+              'Fn::Sub': '${RopeGeoWebApi}.execute-api.${AWS::Region}.amazonaws.com'
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+        DefaultCacheBehavior:
+          TargetOriginId: MobileWellKnownS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        CacheBehaviors:
+          - PathPattern: '/explore/*'
+            TargetOriginId: ExploreHttpApiOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - PATCH
+              - POST
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+
+Outputs:
+  LandingCloudFrontDistributionId:
+    Description: Landing CloudFront distribution ID (invalidation)
+    Value:
+      Ref: LandingDistribution
+  LandingCloudFrontDistributionArn:
+    Description: Landing distribution ARN (main stack LandingCloudFrontDistributionArn)
+    Value:
+      'Fn::Sub': 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${LandingDistribution}'
+  LandingCloudFrontDomainName:
+    Description: Landing distribution domain name
+    Value:
+      'Fn::GetAtt':
+        - LandingDistribution
+        - DomainName
+  MobileCloudFrontDistributionId:
+    Description: Mobile CloudFront distribution ID
+    Value:
+      Ref: MobileDistribution
+  MobileCloudFrontDistributionArn:
+    Description: Mobile distribution ARN (main stack MobileCloudFrontDistributionArn)
+    Value:
+      'Fn::Sub': 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${MobileDistribution}'
+  MobileCloudFrontDomainName:
+    Description: Mobile distribution domain name
+    Value:
+      'Fn::GetAtt':
+        - MobileDistribution
+        - DomainName

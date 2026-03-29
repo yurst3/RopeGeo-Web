@@ -1,0 +1,17 @@
+---
+description: RopeGeo-Web repo scope — landing + mobile explore Lambda; align with WebScraper stack/OpenAPI conventions.
+globs: "**/*"
+alwaysApply: false
+---
+
+# RopeGeo-Web
+
+This repository is **not** WebScraper. It hosts:
+
+- **Landing** — Expo / React Native for Web source in **`src/site/landing/`** (`App.tsx`, `index.ts`, `assets/`); **`npm run build:landing`** writes repo-root **`dist/`** for S3 + CloudFront.
+- **Mobile** well-known assets (`src/site/mobile-well-known/`) + **explore** HTML via Lambda + API Gateway + CloudFront.
+
+When editing **CloudFormation**, **OpenAPI**, or **API Lambdas**, follow the same structural rules as in **WebScraper** (see `cloudformation-stacks.mdc`, `Openapi-docs.mdc`, `api-endpoint-lambdas.mdc`), with these differences:
+
+- Main stack **SAM** Lambdas here typically have **no VPC** and **no RDS** (explore handler uses S3 + HTTPS `fetch` only).
+- **Two CloudFront distributions** live in the **API** stack (landing + mobile); main stack outputs bucket names and Lambda ARNs for OpenAPI env resolution.

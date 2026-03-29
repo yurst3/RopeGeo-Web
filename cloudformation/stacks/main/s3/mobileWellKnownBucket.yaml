@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 bucket for mobile.ropegeo.com /.well-known assets only
+
+Resources:
+  MobileWellKnownBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName:
+        'Fn::Sub': 'ropegeo-web-${devEnvironment}-mobile-well-known'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  MobileWellKnownBucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Condition: HasMobileCloudFront
+    Properties:
+      Bucket:
+        Ref: MobileWellKnownBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowMobileCloudFrontOAC
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action:
+              - 's3:GetObject'
+            Resource:
+              'Fn::Sub':
+                - '${BucketArn}/*'
+                - BucketArn:
+                    'Fn::GetAtt': MobileWellKnownBucket.Arn
+            Condition:
+              StringEquals:
+                'AWS:SourceArn':
+                  Ref: MobileCloudFrontDistributionArn
+
+Outputs:
+  MobileWellKnownBucketName:
+    Description: Bucket for apple-app-site-association, assetlinks.json, etc.
+    Value:
+      Ref: MobileWellKnownBucket

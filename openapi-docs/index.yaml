@@ -1,0 +1,15 @@
+openapi: 3.0.1
+info:
+  title: RopeGeo-Web API
+  description: HTTP API for mobile.ropegeo.com explore HTML and related routes.
+  version: 1.0.0
+  contact:
+    name: RopeGeo
+
+servers:
+  - url: https://mobile.ropegeo.com
+    description: Production mobile host (CloudFront)
+
+paths:
+  /explore/{id}/page:
+    $ref: './paths/getExplorePage.yaml'

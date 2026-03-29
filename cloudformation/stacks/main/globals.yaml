@@ -1,0 +1,9 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: RopeGeoWeb
+Transform:
+  - 'AWS::Serverless-2016-10-31'
+Globals:
+  Function:
+    Tracing: Active
+    LoggingConfig:
+      LogFormat: JSON
