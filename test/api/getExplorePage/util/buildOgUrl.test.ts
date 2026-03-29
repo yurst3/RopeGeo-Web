@@ -89,10 +89,9 @@ describe('buildOgUrl', () => {
     });
 
     it('does not throw when requestContext.http is missing (payload 1.0 shape) if path is set', () => {
-        const url = buildOgUrl(
-            baseEvent({
+        const url = buildOgUrl({
+            ...baseEvent({
                 rawPath: undefined as unknown as string,
-                path: '/explore/legacy/page',
                 headers: { host: 'mobile.ropegeo.com', 'x-forwarded-proto': 'https' },
                 requestContext: {
                     accountId: '123',
@@ -106,7 +105,8 @@ describe('buildOgUrl', () => {
                     timeEpoch: 0,
                 } as APIGatewayProxyEventV2['requestContext'],
             }),
-        );
+            path: '/explore/legacy/page',
+        } as APIGatewayProxyEventV2);
         expect(url).toBe('https://mobile.ropegeo.com/explore/legacy/page');
     });
 });
