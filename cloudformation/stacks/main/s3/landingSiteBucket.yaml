@@ -49,6 +49,24 @@ Resources:
                     'aws:SourceArn':
                       Ref: LandingCloudFrontDistributionArn
               - Ref: 'AWS::NoValue'
+          - 'Fn::If':
+              - HasMobileCloudFront
+              - Sid: AllowMobileCloudFrontOAC
+                Effect: Allow
+                Principal:
+                  Service: cloudfront.amazonaws.com
+                Action:
+                  - 's3:GetObject'
+                Resource:
+                  'Fn::Sub':
+                    - '${BucketArn}/*'
+                    - BucketArn:
+                        'Fn::GetAtt': LandingSiteBucket.Arn
+                Condition:
+                  StringEquals:
+                    'aws:SourceArn':
+                      Ref: MobileCloudFrontDistributionArn
+              - Ref: 'AWS::NoValue'
 
 Outputs:
   LandingSiteBucketName:

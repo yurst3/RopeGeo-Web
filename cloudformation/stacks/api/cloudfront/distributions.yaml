@@ -97,6 +97,15 @@ Resources:
               OriginProtocolPolicy: https-only
               OriginSSLProtocols:
                 - TLSv1.2
+          # Same landing bucket as ropegeo.com — explore HTML is served from mobile host but references /_expo/static/... (Expo web)
+          - Id: MobileLandingAssetsOrigin
+            DomainName:
+              'Fn::Sub': '${LandingBucketName}.s3.${AWS::Region}.amazonaws.com'
+            OriginAccessControlId:
+              'Fn::GetAtt':
+                - RopeGeoWebOAC
+                - Id
+            S3OriginConfig: {}
         DefaultCacheBehavior:
           TargetOriginId: MobileWellKnownS3Origin
           ViewerProtocolPolicy: redirect-to-https
@@ -109,6 +118,84 @@ Resources:
           Compress: true
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
         CacheBehaviors:
+          # One '*' = one path segment under /_expo/static/ (Expo web chunks; depth varies by bundler)
+          - PathPattern: '/_expo/static/*/*/*/*/*'
+            TargetOriginId: MobileLandingAssetsOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          - PathPattern: '/_expo/static/*/*/*/*'
+            TargetOriginId: MobileLandingAssetsOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          - PathPattern: '/_expo/static/*/*/*'
+            TargetOriginId: MobileLandingAssetsOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          - PathPattern: '/_expo/static/*/*'
+            TargetOriginId: MobileLandingAssetsOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          - PathPattern: '/_expo/static/*'
+            TargetOriginId: MobileLandingAssetsOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          - PathPattern: '/assets/*/*'
+            TargetOriginId: MobileLandingAssetsOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          - PathPattern: '/assets/*'
+            TargetOriginId: MobileLandingAssetsOrigin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            CachedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
           # One '*' = one path segment; /explore/* matches only /explore/{id}, not /explore/{id}/page
           - PathPattern: '/explore/*/page'
             TargetOriginId: ExploreHttpApiOrigin
