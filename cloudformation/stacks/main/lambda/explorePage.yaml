@@ -22,6 +22,7 @@ Resources:
           LANDING_INDEX_KEY: index.html
           WEBSCRAPER_API_BASE_URL:
             Ref: WebScraperApiBaseUrl
+          LANDING_HTML_CACHE_TTL_SECONDS: '300'
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

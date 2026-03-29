@@ -49,11 +49,16 @@ function event(overrides: Partial<APIGatewayProxyEventV2> = {}): APIGatewayProxy
 }
 
 describe('getExplorePage handler', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         jest.clearAllMocks();
         process.env.LANDING_BUCKET_NAME = 'landing-bucket';
         process.env.LANDING_INDEX_KEY = 'index.html';
         process.env.WEBSCRAPER_API_BASE_URL = 'https://api.example.com';
+        process.env.LANDING_HTML_CACHE_TTL_SECONDS = '0';
+        const { clearLandingHtmlCacheForTests } = await import(
+            '../../../src/api/getExplorePage/s3/cachedLandingPage'
+        );
+        clearLandingHtmlCacheForTests();
     });
 
     it('returns 400 for missing id', async () => {
@@ -79,6 +84,8 @@ describe('getExplorePage handler', () => {
 
         const res = await handler(event());
         expect(res.statusCode).toBe(200);
+        expect(res.headers['cache-control']).toContain('public');
+        expect(res.headers['cache-control']).toContain('s-maxage');
         expect(typeof res.body).toBe('string');
         expect(res.body).toContain('og:title');
         expect(res.body).toContain('content="T"');
@@ -106,6 +113,7 @@ describe('getExplorePage handler', () => {
 
         const res = await handler(event());
         expect(res.statusCode).toBe(404);
+        expect(res.headers['cache-control']).toBe('no-store');
         errSpy.mockRestore();
     });
 });

@@ -12,6 +12,26 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
+  ExplorePageCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Comment: Cache explore HTML at edge; key includes full path and all query strings
+        DefaultTTL: 60
+        MaxTTL: 300
+        MinTTL: 0
+        Name:
+          'Fn::Sub': '${AWS::StackName}-explore-page'
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: all
+
   LandingDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -211,9 +231,9 @@ Resources:
             CachedMethods:
               - GET
               - HEAD
-              - OPTIONS
             Compress: true
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            CachePolicyId:
+              Ref: ExplorePageCachePolicy
             OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
 
 Outputs:

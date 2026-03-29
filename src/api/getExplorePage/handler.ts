@@ -4,7 +4,7 @@ import { buildOgUrl } from './util/buildOgUrl';
 import { linkPreviewToMetaTags } from './util/linkPreviewToMetaTags';
 import { fallbackHtml } from './util/fallbackHtml';
 import { injectLinkPreviewMeta } from './util/injectLinkPreviewMeta';
-import { getLandingPageHtml } from './s3/getLandingPage';
+import { getLandingPageHtmlCached } from './s3/cachedLandingPage';
 import { getLinkPreview } from './http/getLinkPreview';
 
 export type ExplorePageHandlerResult = {
@@ -17,6 +17,9 @@ const corsHeaders = (): Record<string, string> => ({
     'content-type': 'text/html; charset=utf-8',
     'access-control-allow-origin': '*',
 });
+
+/** Align with mobile CloudFront ExplorePageCachePolicy (DefaultTTL / MaxTTL). */
+const explorePageOkCacheControl = 'public, max-age=60, s-maxage=120, stale-while-revalidate=300';
 
 /**
  * GET /explore/{id}/page — loads landing index.html from S3, fetches LinkPreview JSON from WebScraper, injects OG meta at <!-- LINK_PREVIEW_HEAD -->.
@@ -43,18 +46,21 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<ExplorePag
     }
 
     let html: string;
+    let previewResult: Awaited<ReturnType<typeof getLinkPreview>>;
     try {
-        html = await getLandingPageHtml(bucket, indexKey);
+        [html, previewResult] = await Promise.all([
+            getLandingPageHtmlCached(bucket, indexKey),
+            getLinkPreview(apiBase, id),
+        ]);
     } catch (e) {
-        console.error('S3 GetObject failed:', e);
-        return { statusCode: 500, headers: cors, body: fallbackHtml() };
+        console.error('Explore page parallel load failed:', e);
+        return { statusCode: 500, headers: { ...cors, 'cache-control': 'no-store' }, body: fallbackHtml() };
     }
 
-    const previewResult = await getLinkPreview(apiBase, id);
     if (!previewResult.ok) {
         return {
             statusCode: previewResult.statusCode,
-            headers: cors,
+            headers: { ...cors, 'cache-control': 'no-store' },
             body: fallbackHtml(),
         };
     }
@@ -65,7 +71,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<ExplorePag
 
     return {
         statusCode: 200,
-        headers: cors,
+        headers: { ...cors, 'cache-control': explorePageOkCacheControl },
         body,
     };
 };
