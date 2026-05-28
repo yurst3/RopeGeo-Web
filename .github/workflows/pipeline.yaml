@@ -30,6 +30,9 @@ jobs:
           node-version: '22'
           cache: npm
 
+      - name: Verify Web repo layout
+        run: npm run verify:project-layout
+
       - name: Install dependencies
         run: npm ci
 
@@ -52,7 +55,7 @@ jobs:
 
       - name: Reject Fn::Condition in merged main template
         run: |
-          npm run merge:main-template
+          npm run verify:merged-main-template
           if grep -q "Fn::Condition" cloudformation/stacks/mergedMainTemplate.yaml; then
             echo "::error::Use Condition not Fn::Condition for condition references"
             exit 1
@@ -84,11 +87,17 @@ jobs:
 
       - run: npm ci
 
+      - name: Verify Web repo layout
+        run: npm run verify:project-layout
+
       - name: Merge main template
-        run: npm run merge:main-template
+        run: |
+          npm run merge:main-template
+          npm run verify:merged-main-template
 
       - name: Reject Fn::Condition in merged main template
         run: |
+          npm run verify:merged-main-template
           if grep -q "Fn::Condition" cloudformation/stacks/mergedMainTemplate.yaml; then
             echo "::error::Use Condition not Fn::Condition for condition references"
             exit 1
@@ -328,7 +337,9 @@ jobs:
           echo "mobile=${MOBILE}" >> "$GITHUB_OUTPUT"
 
       - name: Merge API template
-        run: npm run merge:api-template
+        run: |
+          npm run merge:api-template
+          npm run verify:merged-api-template
 
       - name: Deploy API + CloudFront stacks
         env:

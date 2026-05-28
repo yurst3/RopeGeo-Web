@@ -19,6 +19,14 @@ if (!inDir || !outFile || !description) {
   process.exit(1);
 }
 
+if (!fs.existsSync(inDir)) {
+  console.error(`Input directory not found: ${inDir}`);
+  console.error(
+    'Run from the Web repo root (where package.json and cloudformation/stacks/ live).',
+  );
+  process.exit(1);
+}
+
 const SAM_TRANSFORM = "'AWS::Serverless-2016-10-31'";
 
 function fixTransformEmptyDescription(content: string): string {
@@ -45,18 +53,39 @@ function setDescription(content: string, newDescription: string): string {
   return content.replace(/^Description: .*$/m, `Description: ${newDescription}`);
 }
 
+function assertMergedOutputWritten(): void {
+  if (!fs.existsSync(outFile)) {
+    console.error(`Merge failed: output not written at ${outFile}`);
+    process.exit(1);
+  }
+  if (fs.statSync(outFile).size === 0) {
+    console.error(`Merge failed: output is empty at ${outFile}`);
+    process.exit(1);
+  }
+}
+
 function main(): void {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const merger = require('cloudformation-yml-merger') as {
     default: (inputDir: string, outputFile: string) => void;
   };
-  merger.default(inDir, outFile);
+
+  try {
+    merger.default(inDir, outFile);
+  } catch (err) {
+    console.error(`cloudformation-yml-merger failed for ${inDir}:`, err);
+    process.exit(1);
+  }
+
+  assertMergedOutputWritten();
+
   let content = fs.readFileSync(outFile, 'utf8');
   if (fixTransform) {
     content = applyTransformFixes(content);
   }
   content = setDescription(content, description);
   fs.writeFileSync(outFile, content, 'utf8');
+  assertMergedOutputWritten();
 }
 
 main();

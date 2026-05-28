@@ -89,7 +89,7 @@ After changing any file under `cloudformation/stacks/main/` or `cloudformation/s
 
 **Scripts:**
 
-- **`lint:main-template`** – `merge:main-template` then `sam validate --template cloudformation/stacks/mergedMainTemplate.yaml`.
-- **`lint:api-template`** – `merge:api-template` then `sam validate --template cloudformation/stacks/mergedApiTemplate.yaml`.
+- **`lint:main-template`** – `merge:main-template`, `verify:merged-main-template`, then `sam validate --template cloudformation/stacks/mergedMainTemplate.yaml`.
+- **`lint:api-template`** – `merge:api-template`, `verify:merged-api-template`, then `sam validate --template cloudformation/stacks/mergedApiTemplate.yaml`.
 
 Run these after editing any stack YAML under `cloudformation/stacks/`.

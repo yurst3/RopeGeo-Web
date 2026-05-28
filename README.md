@@ -38,6 +38,7 @@ After pulling changes that touch **`package.json`**, run **`npm install`** once 
 
 ```bash
 npm ci
+npm run verify:project-layout
 npm run lint:main-template
 npm run lint:api-template
 npm run lint:openapi
