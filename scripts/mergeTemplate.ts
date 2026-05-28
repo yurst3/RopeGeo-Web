@@ -5,7 +5,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const projectRoot = process.cwd();
+/** Repo root (Web/), not process.cwd() — npm/npx can run with an unexpected cwd on CI. */
+const projectRoot = path.resolve(__dirname, '..');
 const args = process.argv.slice(2);
 const fixTransform = args.includes('--fix-transform');
 const positional = args.filter((a) => a !== '--fix-transform');
@@ -86,6 +87,7 @@ function main(): void {
   content = setDescription(content, description);
   fs.writeFileSync(outFile, content, 'utf8');
   assertMergedOutputWritten();
+  console.log(`Wrote merged template: ${outFile}`);
 }
 
 main();

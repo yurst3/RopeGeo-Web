@@ -46,7 +46,7 @@ A single script builds the deployable template from the split files:
 - **Script:** `scripts/mergeTemplate.ts`
 - **Usage:** `ts-node scripts/mergeTemplate.ts <inDir> <outFile> <description> [--fix-transform]`
 - **NPM:**
-  - **Main:** `npm run merge:main-template` → reads `cloudformation/stacks/main/`, writes `cloudformation/stacks/mergedMainTemplate.yaml`, applies `--fix-transform` (SAM Transform/orphan fixes), sets `Description: RopeGeoWeb`.
+  - **Main:** `npm run merge:main-template` → `node scripts/mergeTemplate.cjs` reads `cloudformation/stacks/main/`, writes `cloudformation/stacks/mergedMainTemplate.yaml`, applies `--fix-transform` (SAM Transform/orphan fixes), sets `Description: RopeGeoWeb`. Paths are resolved from the repo root (`__dirname`), not `process.cwd()`.
   - **API:** `npm run merge:api-template` → reads `cloudformation/stacks/api/`, writes `cloudformation/stacks/mergedApiTemplate.yaml`, sets the API stack description.
 
 The merger ([cloudformation-yml-merger](https://github.com/dakoo/cloudformation-yml-merger)) discovers every `.yaml`/`.yml` under `inDir` recursively, deep-merges them into one template, and writes to `outFile`. The script then overwrites the top-level `Description` with the given `description`. For the main stack, it also fixes known merger quirks (empty `Transform`, orphan list items).
