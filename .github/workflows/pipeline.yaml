@@ -252,31 +252,47 @@ jobs:
       - name: Read main stack outputs for OpenAPI resolution
         id: stack-outputs
         run: |
+          set -euo pipefail
           BUCKET=$(aws cloudformation describe-stacks \
             --stack-name "${PROD_MAIN_STACK_NAME}" \
             --region "${PROD_REGION}" \
             --query "Stacks[0].Outputs[?OutputKey=='DocsBucketName'].OutputValue" \
-            --output text)
+            --output text | tr -d '\n\r')
           EXPLORE_ARN=$(aws cloudformation describe-stacks \
             --stack-name "${PROD_MAIN_STACK_NAME}" \
             --region "${PROD_REGION}" \
             --query "Stacks[0].Outputs[?OutputKey=='ExplorePageLambdaArn'].OutputValue" \
-            --output text)
+            --output text | tr -d '\n\r')
           INVOKE_ROLE=$(aws cloudformation describe-stacks \
             --stack-name "${PROD_MAIN_STACK_NAME}" \
             --region "${PROD_REGION}" \
             --query "Stacks[0].Outputs[?OutputKey=='ApiGatewayInvokeLambdaRoleArn'].OutputValue" \
-            --output text)
+            --output text | tr -d '\n\r')
+          if [ -z "$BUCKET" ] || [ "$BUCKET" = "None" ]; then
+            echo "::error::Main stack output DocsBucketName is missing or empty"
+            exit 1
+          fi
+          if [ -z "$EXPLORE_ARN" ] || [ "$EXPLORE_ARN" = "None" ]; then
+            echo "::error::Main stack output ExplorePageLambdaArn is missing or empty"
+            exit 1
+          fi
+          if [ -z "$INVOKE_ROLE" ] || [ "$INVOKE_ROLE" = "None" ]; then
+            echo "::error::Main stack output ApiGatewayInvokeLambdaRoleArn is missing or empty"
+            exit 1
+          fi
           echo "docs_bucket=${BUCKET}" >> "$GITHUB_OUTPUT"
           echo "explore_arn=${EXPLORE_ARN}" >> "$GITHUB_OUTPUT"
           echo "invoke_role=${INVOKE_ROLE}" >> "$GITHUB_OUTPUT"
 
       - name: Resolve OpenAPI placeholders to openapiResolved.yaml
         run: |
-          REGION=${{ env.PROD_REGION }} \
-          EXPLORE_PAGE_LAMBDA_ARN=${{ steps.stack-outputs.outputs.explore_arn }} \
-          APIGATEWAY_INVOKE_LAMBDA_ROLE_ARN=${{ steps.stack-outputs.outputs.invoke_role }} \
-          npx ts-node --files scripts/resolveYamlEnvs.ts docs-build/openapi.yaml docs-build/openapiResolved.yaml
+          set -euo pipefail
+          test -f docs-build/openapi.yaml
+          REGION="${{ env.PROD_REGION }}" \
+          EXPLORE_PAGE_LAMBDA_ARN="${{ steps.stack-outputs.outputs.explore_arn }}" \
+          APIGATEWAY_INVOKE_LAMBDA_ROLE_ARN="${{ steps.stack-outputs.outputs.invoke_role }}" \
+          node scripts/resolveYamlEnvs.cjs docs-build/openapi.yaml docs-build/openapiResolved.yaml
+          node scripts/verifyMergedTemplate.cjs docs-build/openapiResolved.yaml
 
       - name: Verify resolved OpenAPI has API Gateway Lambda integration fields
         run: |

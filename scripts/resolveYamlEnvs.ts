@@ -15,8 +15,10 @@ if (!inputFile || !outputFile) {
   process.exit(1);
 }
 
-const inputPath = path.resolve(process.cwd(), inputFile);
-const outputPath = path.resolve(process.cwd(), outputFile);
+/** Repo root (Web/), not process.cwd() — npm/npx can run with an unexpected cwd on CI. */
+const projectRoot = path.resolve(__dirname, '..');
+const inputPath = path.resolve(projectRoot, inputFile);
+const outputPath = path.resolve(projectRoot, outputFile);
 
 let content = fs.readFileSync(inputPath, 'utf8');
 
