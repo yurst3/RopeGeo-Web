@@ -10,7 +10,32 @@ import {
 } from 'react-native';
 
 import { darkTheme as colors } from './constants/darkTheme';
+import { PrivacyPolicyScreen } from './PrivacyPolicyScreen';
 import { ScreenshotGallery } from './ScreenshotGallery';
+
+function getWebRoute(): 'home' | 'privacy' {
+    if (typeof window === 'undefined') {
+        return 'home';
+    }
+
+    const path = window.location.pathname.toLowerCase();
+    if (
+        path === '/privacy' ||
+        path === '/privacy/' ||
+        path === '/privacy.html' ||
+        path.endsWith('/privacy/index.html')
+    ) {
+        return 'privacy';
+    }
+
+    return 'home';
+}
+
+function openPrivacyPolicy() {
+    if (typeof window !== 'undefined') {
+        window.location.href = '/privacy.html';
+    }
+}
 
 const APP_NAME = 'RopeGeo';
 
@@ -143,7 +168,7 @@ function DataSourceLink({
     );
 }
 
-export default function App() {
+function LandingHome() {
     return (
         <ScrollView
             style={styles.root}
@@ -222,8 +247,30 @@ export default function App() {
                         </Text>
                     </View>
                 </View>
+
+                <View style={styles.footer}>
+                    <Pressable
+                        accessibilityRole="link"
+                        accessibilityLabel="Privacy Policy"
+                        onPress={openPrivacyPolicy}
+                        style={({ pressed }) => [
+                            styles.footerLink,
+                            pressed && styles.footerLinkPressed,
+                        ]}
+                    >
+                        <Text style={styles.footerLinkText}>Privacy Policy</Text>
+                    </Pressable>
+                </View>
             </View>
         </ScrollView>
+    );
+}
+
+export default function App() {
+    return getWebRoute() === 'privacy' ? (
+        <PrivacyPolicyScreen />
+    ) : (
+        <LandingHome />
     );
 }
 
@@ -368,5 +415,21 @@ const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 26,
         color: colors.text.secondary,
+    },
+    footer: {
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    footerLink: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+    },
+    footerLinkPressed: {
+        opacity: 0.75,
+    },
+    footerLinkText: {
+        fontSize: 14,
+        color: colors.text.tertiary,
+        textDecorationLine: 'underline',
     },
 });
