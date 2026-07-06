@@ -3,8 +3,8 @@
     "apps": [],
     "details": [
       {
-        "appID": "YOUR_APPLE_TEAM_ID.com.your.bundleid",
-        "paths": ["/explore/*"]
+        "appID": "DN7ZXV3RUG.com.yurst3.RopeGeo",
+        "paths": ["/explore/*/page", "/explore/*/region"]
       }
     ]
   }
