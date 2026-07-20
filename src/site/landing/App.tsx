@@ -39,7 +39,7 @@ function openPrivacyPolicy() {
 
 const APP_NAME = 'RopeGeo';
 
-const APP_STORE_URL = 'https://apps.apple.com/app/ropegeo/id000000000';
+const APP_STORE_URL = 'https://apps.apple.com/app/ropegeo/id6774801105';
 const PLAY_STORE_URL =
     'https://play.google.com/store/apps/details?id=com.yurst3.RopeGeo';
 const DISCORD_URL = 'https://discord.gg/hqKB3RWEaP';
