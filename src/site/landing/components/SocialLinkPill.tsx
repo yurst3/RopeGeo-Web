@@ -13,10 +13,12 @@ export function SocialLinkPill({
     label,
     url,
     logo,
+    logoTintColor,
 }: {
     label: string;
     url: string;
     logo: ImageSourcePropType;
+    logoTintColor?: string;
 }) {
     const hasUrl = url.trim().length > 0;
 
@@ -39,7 +41,10 @@ export function SocialLinkPill({
             <Text style={styles.socialPillText}>{label}</Text>
             <Image
                 source={logo}
-                style={styles.socialPillLogo}
+                style={[
+                    styles.socialPillLogo,
+                    logoTintColor != null ? { tintColor: logoTintColor } : null,
+                ]}
                 resizeMode="contain"
                 accessibilityElementsHidden
                 importantForAccessibility="no"

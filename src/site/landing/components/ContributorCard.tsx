@@ -17,6 +17,7 @@ export type ContributorSocialLink = {
     label: string;
     url: string;
     logo: ImageSourcePropType;
+    logoTintColor?: string;
 };
 
 export function ContributorCard({
@@ -26,6 +27,7 @@ export function ContributorCard({
     description,
     designedWork,
     socialLinks,
+    centerDescriptionWithPhoto = true,
 }: {
     name: string;
     title: string;
@@ -33,6 +35,8 @@ export function ContributorCard({
     description: string;
     designedWork?: ReactNode;
     socialLinks: readonly ContributorSocialLink[];
+    /** When true, vertically center the description with the profile photo. */
+    centerDescriptionWithPhoto?: boolean;
 }) {
     return (
         <View style={styles.contributorCard}>
@@ -57,13 +61,20 @@ export function ContributorCard({
                                     label={link.label}
                                     url={link.url}
                                     logo={link.logo}
+                                    logoTintColor={link.logoTintColor}
                                 />
                             ))}
                         </View>
                     ) : null}
                 </View>
 
-                <View style={styles.contributorDescriptionColumn}>
+                <View
+                    style={[
+                        styles.contributorDescriptionColumn,
+                        centerDescriptionWithPhoto &&
+                            styles.contributorDescriptionColumnCentered,
+                    ]}
+                >
                     <View style={styles.contributorDescriptionBody}>
                         <Text style={styles.contributorDescription}>
                             {description}
@@ -130,6 +141,8 @@ const styles = StyleSheet.create({
     contributorDescriptionColumn: {
         flex: 1,
         minWidth: 260,
+    },
+    contributorDescriptionColumnCentered: {
         height: PROFILE_PHOTO_SIZE,
         justifyContent: 'center',
     },
