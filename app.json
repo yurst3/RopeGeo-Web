@@ -4,22 +4,10 @@
     "slug": "ropegeo-landing",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/site/landing/assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./src/site/landing/assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#111111"
-    },
     "ios": {
       "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./src/site/landing/assets/adaptive-icon.png",
-        "backgroundColor": "#111111"
-      }
     },
     "web": {
       "output": "single",

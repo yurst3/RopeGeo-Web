@@ -11,7 +11,7 @@ import {
     type ViewStyle,
 } from 'react-native';
 
-import { darkTheme as colors } from './constants/darkTheme';
+import { darkTheme as colors } from '../constants/darkTheme';
 
 const GALLERY_PAN_KEYFRAMES_NAME = 'ropegeo-gallery-pan';
 const GALLERY_PAN_KEYFRAMES_STYLE_ID = 'ropegeo-gallery-pan-keyframes';

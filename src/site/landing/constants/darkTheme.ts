@@ -35,4 +35,21 @@ export const darkTheme = {
         shadow: '#ffffff',
         icon: '#ffffff',
     },
+    badge: {
+        border: '#ffffff',
+        relevanceStrength: {
+            'Maybe Relevant': {
+                background: '#b45309',
+                icon: '#ffffff',
+            },
+            'Somewhat Relevant': {
+                background: '#ca8a04',
+                icon: '#ffffff',
+            },
+            'Definitely Relevant': {
+                background: '#166534',
+                icon: '#ffffff',
+            },
+        },
+    },
 } as const;

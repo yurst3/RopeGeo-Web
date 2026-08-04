@@ -7,7 +7,8 @@ import {
     View,
 } from 'react-native';
 
-import { darkTheme as colors } from './constants/darkTheme';
+import { darkTheme as colors } from '../../constants/darkTheme';
+import { openHome } from '../../utils/routing';
 
 const CONTACT_EMAIL = '4lrce4@gmail.com';
 const LAST_UPDATED = 'May 31, 2026';
@@ -40,7 +41,9 @@ const SECTIONS: Section[] = [
     },
     {
         title: 'How We Use Information',
-        paragraphs: ['We use information only to operate and improve RopeGeo, including to:'],
+        paragraphs: [
+            'We use information only to operate and improve RopeGeo, including to:',
+        ],
         bullets: [
             'Display maps and route information',
             'Show your location on the map when you allow it',
@@ -105,14 +108,7 @@ function openEmail() {
     void Linking.openURL(`mailto:${CONTACT_EMAIL}`);
 }
 
-function openHome() {
-    if (typeof window !== 'undefined') {
-        window.location.href = '/';
-        return;
-    }
-}
-
-export function PrivacyPolicyScreen() {
+export function PrivacyPolicyPage() {
     return (
         <ScrollView
             style={styles.root}

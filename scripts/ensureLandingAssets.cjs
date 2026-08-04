@@ -1,5 +1,5 @@
 /**
- * Writes minimal valid PNGs so `expo export` can run without checked-in binary assets.
+ * Writes a minimal valid PNG so `expo export` can run without a checked-in favicon.
  */
 const fs = require('fs');
 const path = require('path');
@@ -11,9 +11,7 @@ const png = Buffer.from(
 );
 
 fs.mkdirSync(dir, { recursive: true });
-for (const name of ['icon.png', 'splash-icon.png', 'adaptive-icon.png', 'favicon.png']) {
-    const f = path.join(dir, name);
-    if (!fs.existsSync(f)) {
-        fs.writeFileSync(f, png);
-    }
+const favicon = path.join(dir, 'favicon.png');
+if (!fs.existsSync(favicon)) {
+    fs.writeFileSync(favicon, png);
 }
