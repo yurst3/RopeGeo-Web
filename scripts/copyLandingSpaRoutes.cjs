@@ -14,9 +14,25 @@ if (!fs.existsSync(indexPath)) {
 
 const html = fs.readFileSync(indexPath, 'utf8');
 
-const privacyDir = path.join(distDir, 'privacy');
-fs.mkdirSync(privacyDir, { recursive: true });
-fs.writeFileSync(path.join(privacyDir, 'index.html'), html, 'utf8');
-fs.writeFileSync(path.join(distDir, 'privacy.html'), html, 'utf8');
+const spaRoutes = [
+    'privacy',
+    'documentation',
+    'documentation/ropewikiscraper',
+];
 
-console.log('Copied index.html to dist/privacy/index.html and dist/privacy.html');
+for (const route of spaRoutes) {
+    const routeDir = path.join(distDir, route);
+    fs.mkdirSync(routeDir, { recursive: true });
+    fs.writeFileSync(path.join(routeDir, 'index.html'), html, 'utf8');
+    fs.writeFileSync(path.join(distDir, `${route}.html`), html, 'utf8');
+}
+
+console.log(
+    'Copied index.html to:',
+    spaRoutes
+        .flatMap((route) => [
+            `dist/${route}/index.html`,
+            `dist/${route}.html`,
+        ])
+        .join(', ')
+);

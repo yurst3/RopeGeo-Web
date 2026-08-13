@@ -27,14 +27,16 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.971.0",
+    "@iconify-json/logos": "^1.2.12",
+    "esbuild": "^0.27.2",
     "expo": "~54.0.33",
     "expo-status-bar": "~3.0.9",
+    "mermaid": "^11.16.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-web": "~0.21.0",
-    "ropegeo-common": "^1.6.0",
-    "esbuild": "^0.27.2"
+    "ropegeo-common": "^1.6.0"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
@@ -44,6 +46,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^24.10.2",
     "@types/react": "~19.1.0",
+    "@types/react-dom": "~19.1.0",
     "babel-preset-expo": "~54.0.0",
     "cloudformation-yml-merger": "^1.0.5",
     "jest": "^30.2.0",

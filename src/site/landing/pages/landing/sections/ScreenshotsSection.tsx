@@ -5,23 +5,23 @@ import { darkTheme as colors } from '../../../constants/darkTheme';
 
 const SCREENSHOTS = [
     {
-        source: require('../../../assets/screenshots/RopegeoExplore.png'),
+        source: require('../../../assets/screenshots/ropegeo/RopegeoExplore.png'),
         label: 'Explore map with route markers',
     },
     {
-        source: require('../../../assets/screenshots/RopegeoSearch.png'),
+        source: require('../../../assets/screenshots/ropegeo/RopegeoSearch.png'),
         label: 'Search for routes and regions',
     },
     {
-        source: require('../../../assets/screenshots/RopegeoRegion.png'),
+        source: require('../../../assets/screenshots/ropegeo/RopegeoRegion.png'),
         label: 'Region overview',
     },
     {
-        source: require('../../../assets/screenshots/RopegeoPage.png'),
+        source: require('../../../assets/screenshots/ropegeo/RopegeoPage.png'),
         label: 'Route page with map and details',
     },
     {
-        source: require('../../../assets/screenshots/RopegeoMinimap.png'),
+        source: require('../../../assets/screenshots/ropegeo/RopegeoMinimap.png'),
         label: 'Minimap on a route page',
     },
 ] as const;
