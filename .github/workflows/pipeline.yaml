@@ -178,7 +178,7 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn "${PROD_CLOUDFORMATION_EXECUTION_ROLE}" \
             --parameter-overrides \
-              "devEnvironment=production WebScraperApiBaseUrl=${API_BASE} DocsBucketPipelineRoleArn=${PROD_PIPELINE_EXECUTION_ROLE} PipelineExecutionRoleName= LandingCloudFrontDistributionArn= MobileCloudFrontDistributionArn="
+              "devEnvironment=production WebScraperApiBaseUrl=${API_BASE} DocsBucketPipelineRoleArn=${PROD_PIPELINE_EXECUTION_ROLE} PipelineExecutionRoleName=${PROD_PIPELINE_EXECUTION_ROLE##*/} LandingCloudFrontDistributionArn= MobileCloudFrontDistributionArn="
 
   sync-site-assets:
     if: github.ref == 'refs/heads/master'

@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM policy for pipeline to sync landing and mobile well-known S3 buckets
+
+Resources:
+  PipelineSiteSyncPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Condition: HasPipelineExecutionRoleName
+    Properties:
+      ManagedPolicyName:
+        'Fn::Sub': '${AWS::StackName}-pipeline-site-sync'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ListLandingAndMobileBuckets
+            Effect: Allow
+            Action:
+              - 's3:ListBucket'
+            Resource:
+              - 'Fn::GetAtt': LandingSiteBucket.Arn
+              - 'Fn::GetAtt': MobileWellKnownBucket.Arn
+          - Sid: SyncLandingAndMobileObjects
+            Effect: Allow
+            Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 's3:DeleteObject'
+            Resource:
+              - 'Fn::Sub':
+                  - '${BucketArn}/*'
+                  - BucketArn:
+                      'Fn::GetAtt': LandingSiteBucket.Arn
+              - 'Fn::Sub':
+                  - '${BucketArn}/*'
+                  - BucketArn:
+                      'Fn::GetAtt': MobileWellKnownBucket.Arn
+      Roles:
+        - Ref: PipelineExecutionRoleName
+
+Outputs:
+  PipelineSiteSyncPolicyArn:
+    Condition: HasPipelineExecutionRoleName
+    Description: 'ARN of the managed policy that allows the pipeline execution role to aws s3 sync the landing and mobile well-known buckets. If PipelineExecutionRoleName is not set, attach this policy to the role used by sync-site-assets.'
+    Value:
+      Ref: PipelineSiteSyncPolicy

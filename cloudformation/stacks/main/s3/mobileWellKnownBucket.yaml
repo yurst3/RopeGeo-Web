@@ -14,28 +14,50 @@ Resources:
         RestrictPublicBuckets: true
   MobileWellKnownBucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
-    Condition: HasMobileCloudFront
+    Condition: HasMobileWellKnownBucketPolicy
     Properties:
       Bucket:
         Ref: MobileWellKnownBucket
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Sid: AllowMobileCloudFrontOAC
-            Effect: Allow
-            Principal:
-              Service: cloudfront.amazonaws.com
-            Action:
-              - 's3:GetObject'
-            Resource:
-              'Fn::Sub':
-                - '${BucketArn}/*'
-                - BucketArn:
-                    'Fn::GetAtt': MobileWellKnownBucket.Arn
-            Condition:
-              StringEquals:
-                'aws:SourceArn':
-                  Ref: MobileCloudFrontDistributionArn
+          - 'Fn::If':
+              - HasDocsBucketPipelineRole
+              - Sid: AllowPipelineSync
+                Effect: Allow
+                Principal:
+                  AWS:
+                    Ref: DocsBucketPipelineRoleArn
+                Action:
+                  - 's3:ListBucket'
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                  - 's3:DeleteObject'
+                Resource:
+                  - 'Fn::GetAtt': MobileWellKnownBucket.Arn
+                  - 'Fn::Sub':
+                      - '${BucketArn}/*'
+                      - BucketArn:
+                          'Fn::GetAtt': MobileWellKnownBucket.Arn
+              - Ref: 'AWS::NoValue'
+          - 'Fn::If':
+              - HasMobileCloudFront
+              - Sid: AllowMobileCloudFrontOAC
+                Effect: Allow
+                Principal:
+                  Service: cloudfront.amazonaws.com
+                Action:
+                  - 's3:GetObject'
+                Resource:
+                  'Fn::Sub':
+                    - '${BucketArn}/*'
+                    - BucketArn:
+                        'Fn::GetAtt': MobileWellKnownBucket.Arn
+                Condition:
+                  StringEquals:
+                    'aws:SourceArn':
+                      Ref: MobileCloudFrontDistributionArn
+              - Ref: 'AWS::NoValue'
 
 Outputs:
   MobileWellKnownBucketName:

@@ -7,6 +7,11 @@ Conditions:
       - 'Fn::Equals':
           - Ref: DocsBucketPipelineRoleArn
           - ''
+  HasPipelineExecutionRoleName:
+    'Fn::Not':
+      - 'Fn::Equals':
+          - Ref: PipelineExecutionRoleName
+          - ''
   HasLandingCloudFront:
     'Fn::Not':
       - 'Fn::Equals':
@@ -17,3 +22,7 @@ Conditions:
       - 'Fn::Equals':
           - Ref: MobileCloudFrontDistributionArn
           - ''
+  HasMobileWellKnownBucketPolicy:
+    'Fn::Or':
+      - Condition: HasDocsBucketPipelineRole
+      - Condition: HasMobileCloudFront
