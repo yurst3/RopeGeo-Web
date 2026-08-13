@@ -167,8 +167,23 @@ jobs:
 
       - name: Deploy main stack (S3, explore Lambda, IAM)
         run: |
-          set -e
+          set -euo pipefail
           API_BASE="${WEBSCRAPER_API_BASE:-https://api.webscraper.ropegeo.com}"
+          # Preserve CloudFront ARNs already on the stack. Blanking them removes the
+          # landing/mobile bucket OAC statements and CloudFront gets 403 from S3 until
+          # update-prod-main-cloudfront-refs runs (and the site stays broken if that job never runs).
+          LANDING_CF=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Parameters[?ParameterKey=='LandingCloudFrontDistributionArn'].ParameterValue" \
+            --output text 2>/dev/null || true)
+          MOBILE_CF=$(aws cloudformation describe-stacks \
+            --stack-name "${PROD_MAIN_STACK_NAME}" \
+            --region "${PROD_REGION}" \
+            --query "Stacks[0].Parameters[?ParameterKey=='MobileCloudFrontDistributionArn'].ParameterValue" \
+            --output text 2>/dev/null || true)
+          if [ -z "${LANDING_CF}" ] || [ "${LANDING_CF}" = "None" ]; then LANDING_CF=""; fi
+          if [ -z "${MOBILE_CF}" ] || [ "${MOBILE_CF}" = "None" ]; then MOBILE_CF=""; fi
           sam deploy --config-env ci \
             --stack-name "${PROD_MAIN_STACK_NAME}" \
             --template packaged-prod.yaml \
@@ -178,7 +193,7 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn "${PROD_CLOUDFORMATION_EXECUTION_ROLE}" \
             --parameter-overrides \
-              "devEnvironment=production WebScraperApiBaseUrl=${API_BASE} DocsBucketPipelineRoleArn=${PROD_PIPELINE_EXECUTION_ROLE} PipelineExecutionRoleName=${PROD_PIPELINE_EXECUTION_ROLE##*/} LandingCloudFrontDistributionArn= MobileCloudFrontDistributionArn="
+              "devEnvironment=production WebScraperApiBaseUrl=${API_BASE} DocsBucketPipelineRoleArn=${PROD_PIPELINE_EXECUTION_ROLE} PipelineExecutionRoleName=${PROD_PIPELINE_EXECUTION_ROLE##*/} LandingCloudFrontDistributionArn=${LANDING_CF} MobileCloudFrontDistributionArn=${MOBILE_CF}"
 
   sync-site-assets:
     if: github.ref == 'refs/heads/master'
