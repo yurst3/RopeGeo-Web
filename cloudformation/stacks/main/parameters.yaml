@@ -18,7 +18,7 @@ Parameters:
     Default: ''
   PipelineExecutionRoleName:
     Type: String
-    Description: IAM role name (not ARN) of the pipeline role; used to attach site-sync (and optional CloudFront invalidation) policies.
+    Description: IAM role name (not ARN) of the pipeline role; used to attach site-sync, API Gateway PassRole, and optional CloudFront invalidation policies.
     Default: ''
   LandingCloudFrontDistributionArn:
     Type: String

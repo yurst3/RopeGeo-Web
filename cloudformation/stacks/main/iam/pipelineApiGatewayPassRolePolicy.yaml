@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM policy for pipeline to PassRole ApiGatewayInvokeLambdaRole during API reimport
+
+Resources:
+  PipelineApiGatewayPassRolePolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Condition: HasPipelineExecutionRoleName
+    Properties:
+      ManagedPolicyName:
+        'Fn::Sub': '${AWS::StackName}-pipeline-apig-pass-role'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PassApiGatewayInvokeLambdaRole
+            Effect: Allow
+            Action: 'iam:PassRole'
+            Resource:
+              'Fn::GetAtt': ApiGatewayInvokeLambdaRole.Arn
+            Condition:
+              StringEquals:
+                'iam:PassedToService': apigateway.amazonaws.com
+      Roles:
+        - Ref: PipelineExecutionRoleName
+
+Outputs:
+  PipelineApiGatewayPassRolePolicyArn:
+    Condition: HasPipelineExecutionRoleName
+    Description: 'ARN of the managed policy that allows the pipeline execution role to iam:PassRole the ApiGatewayInvokeLambdaRole when reimporting the HTTP API from OpenAPI. If PipelineExecutionRoleName is not set, attach this policy to the role used by deploy-prod-api.'
+    Value:
+      Ref: PipelineApiGatewayPassRolePolicy
