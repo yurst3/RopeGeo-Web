@@ -26,3 +26,8 @@ Conditions:
     'Fn::Or':
       - Condition: HasDocsBucketPipelineRole
       - Condition: HasMobileCloudFront
+  HasPipelineExecutionRoleAndCloudFront:
+    'Fn::And':
+      - Condition: HasPipelineExecutionRoleName
+      - Condition: HasLandingCloudFront
+      - Condition: HasMobileCloudFront
