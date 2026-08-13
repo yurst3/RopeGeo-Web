@@ -75,7 +75,9 @@ export function MermaidDiagram({
                     return;
                 }
                 node.innerHTML = svg;
-                for (const cluster of node.querySelectorAll('g.cluster')) {
+                for (const cluster of Array.from(
+                    node.querySelectorAll('g.cluster')
+                )) {
                     const rect = cluster.querySelector('rect');
                     const label = cluster.querySelector('g.cluster-label');
                     if (rect) {
@@ -88,8 +90,8 @@ export function MermaidDiagram({
                         const match = /translate\(\s*([^,]+),\s*([^)]+)\)/.exec(
                             transform
                         );
-                        if (match) {
-                            const labelY = match[2].trim();
+                        const labelY = match?.[2]?.trim();
+                        if (labelY != null) {
                             const leftPadding = 12;
                             label.setAttribute(
                                 'transform',
