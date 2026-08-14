@@ -2,7 +2,8 @@ export type WebRoute =
     | 'home'
     | 'privacy'
     | 'documentation'
-    | 'documentation-ropewikiscraper';
+    | 'documentation-ropewikiscraper'
+    | 'documentation-ropewikipageprocessor';
 
 export function getWebRoute(): WebRoute {
     if (typeof window === 'undefined') {
@@ -26,6 +27,15 @@ export function getWebRoute(): WebRoute {
         path.endsWith('/documentation/ropewikiscraper/index.html')
     ) {
         return 'documentation-ropewikiscraper';
+    }
+
+    if (
+        path === '/documentation/ropewikipageprocessor' ||
+        path === '/documentation/ropewikipageprocessor/' ||
+        path === '/documentation/ropewikipageprocessor.html' ||
+        path.endsWith('/documentation/ropewikipageprocessor/index.html')
+    ) {
+        return 'documentation-ropewikipageprocessor';
     }
 
     if (
@@ -61,6 +71,12 @@ export function openDocumentationSection(sectionId: string) {
 export function openRopewikiScraperDocumentation() {
     if (typeof window !== 'undefined') {
         window.location.href = '/documentation/ropewikiscraper.html';
+    }
+}
+
+export function openRopewikiPageProcessorDocumentation() {
+    if (typeof window !== 'undefined') {
+        window.location.href = '/documentation/ropewikipageprocessor.html';
     }
 }
 

@@ -75,6 +75,17 @@ export function MermaidDiagram({
                     return;
                 }
                 node.innerHTML = svg;
+                // Mermaid foreignObject labels can inherit non-interactive
+                // pointer events; re-enable clicks on in-diagram page links.
+                for (const anchor of Array.from(node.querySelectorAll('a'))) {
+                    const el = anchor as HTMLElement;
+                    el.style.pointerEvents = 'auto';
+                    el.style.cursor = 'pointer';
+                    el.style.color = '#dc732b';
+                    for (const child of Array.from(el.querySelectorAll('span'))) {
+                        (child as HTMLElement).style.color = '#dc732b';
+                    }
+                }
                 for (const cluster of Array.from(
                     node.querySelectorAll('g.cluster')
                 )) {

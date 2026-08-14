@@ -26,6 +26,8 @@ type AwsServiceStyle = {
  * When `maxWidth` is set, the label is clamped to that width and `maxLines`.
  * When omitted, the label sizes to its text (single-line by default).
  * When `backgroundColor` is set, a Mermaid `style` fill is emitted for the node.
+ * When `pageLink` is set, the label is rendered as an underlined link in the
+ * docs highlight color.
  */
 export type MermaidNodeParams = {
     id: string;
@@ -38,6 +40,8 @@ export type MermaidNodeParams = {
     maxWidth?: number;
     /** CSS/SVG fill color for the Mermaid node background. */
     backgroundColor?: string;
+    /** Docs (or other) href; when set, the label is an underlined highlight link. */
+    pageLink?: string;
 };
 
 /**
@@ -65,6 +69,8 @@ export class MermaidNode {
     private static readonly ICON_SIZE_PX = 36;
     private static readonly LABEL_GAP_PX = 10;
     private static readonly LABEL_FONT_SIZE_PX = 14;
+    /** Matches landing `darkTheme.text.link` for in-diagram doc links. */
+    private static readonly LINK_COLOR = '#dc732b';
 
     private static readonly SERVICE_STYLES: Record<
         AwsService,
@@ -95,6 +101,7 @@ export class MermaidNode {
     private readonly maxLines: number;
     private readonly maxWidth?: number;
     private readonly backgroundColor?: string;
+    private readonly pageLink?: string;
 
     constructor({
         id,
@@ -104,6 +111,7 @@ export class MermaidNode {
         maxLines = 1,
         maxWidth,
         backgroundColor,
+        pageLink,
     }: MermaidNodeParams) {
         this.id = id;
         this.label = label;
@@ -112,6 +120,7 @@ export class MermaidNode {
         this.maxLines = maxLines;
         this.maxWidth = maxWidth;
         this.backgroundColor = backgroundColor;
+        this.pageLink = pageLink;
     }
 
     /**
@@ -127,8 +136,18 @@ export class MermaidNode {
     private static readonly nodeClasses = new Map<string, string>();
 
     /**
+     * Clears pending `classDef` / `class` registrations. Call before building a
+     * chart string so styles from another page (same node ids) do not leak.
+     */
+    static resetStyleRegistry(): void {
+        MermaidNode.classDefs.clear();
+        MermaidNode.nodeClasses.clear();
+    }
+
+    /**
      * Mermaid `classDef` / `class` statements for nodes that set
      * `backgroundColor`. Append after the main chart (see MermaidDiagram).
+     * Clears the registry afterward so the next chart starts clean.
      */
     static formatStyleAppendix(): string {
         const lines: string[] = [];
@@ -138,6 +157,7 @@ export class MermaidNode {
         for (const [nodeId, className] of MermaidNode.nodeClasses) {
             lines.push(`class ${nodeId} ${className}`);
         }
+        MermaidNode.resetStyleRegistry();
         return lines.join('\n');
     }
 
@@ -173,6 +193,8 @@ export class MermaidNode {
                 `fill:${this.backgroundColor}`
             );
             MermaidNode.nodeClasses.set(this.id, className);
+        } else {
+            MermaidNode.nodeClasses.delete(this.id);
         }
         return `${this.id}@{ shape: ${this.nodeShape}, label: "${html}" }`;
     }
@@ -203,12 +225,18 @@ export class MermaidNode {
 
     private labelStyle(): CSSProperties {
         const base: CSSProperties = {
-            color: '#ffffff',
+            color:
+                this.pageLink != null
+                    ? MermaidNode.LINK_COLOR
+                    : '#ffffff',
             fontSize: MermaidNode.LABEL_FONT_SIZE_PX,
             lineHeight: 1.25,
             textAlign: 'left',
             // Override Mermaid's foreignObject wrapper `white-space: nowrap`.
             whiteSpace: this.maxWidth != null ? 'normal' : 'nowrap',
+            ...(this.pageLink != null
+                ? { textDecoration: 'underline' }
+                : {}),
         };
 
         if (this.maxWidth == null) {
@@ -234,6 +262,24 @@ export class MermaidNode {
     private renderHtmlLabel(): string {
         const iconSize = MermaidNode.ICON_SIZE_PX;
         const labelGap = MermaidNode.LABEL_GAP_PX;
+        const labelStyle = this.labelStyle();
+        const label =
+            this.pageLink != null ? (
+                <a
+                    href={this.pageLink}
+                    style={{
+                        ...labelStyle,
+                        // Keep docs orange for :visited (browser default is purple).
+                        color: MermaidNode.LINK_COLOR,
+                    }}
+                >
+                    <span style={{ color: MermaidNode.LINK_COLOR }}>
+                        {this.label}
+                    </span>
+                </a>
+            ) : (
+                <div style={labelStyle}>{this.label}</div>
+            );
 
         return renderToStaticMarkup(
             <div
@@ -260,7 +306,7 @@ export class MermaidNode {
                         backgroundSize: 'contain',
                     }}
                 />
-                <div style={this.labelStyle()}>{this.label}</div>
+                {label}
             </div>
         ).replaceAll('"', "'");
     }

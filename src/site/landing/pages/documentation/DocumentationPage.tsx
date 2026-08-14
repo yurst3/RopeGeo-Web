@@ -5,6 +5,7 @@ import { darkTheme as colors } from '../../constants/darkTheme';
 import { openUrl } from '../../utils/openUrl';
 import {
     openHome,
+    openRopewikiPageProcessorDocumentation,
     openRopewikiScraperDocumentation,
     scrollToSection,
 } from '../../utils/routing';
@@ -209,6 +210,10 @@ const REPOS: RepoSection[] = [
             {
                 name: 'RopewikiScraper',
                 openPage: openRopewikiScraperDocumentation,
+            },
+            {
+                name: 'RopewikiPageProcessor',
+                openPage: openRopewikiPageProcessorDocumentation,
             },
         ],
     },

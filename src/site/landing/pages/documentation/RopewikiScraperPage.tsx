@@ -80,11 +80,13 @@ const SCRAPER_NODE = MermaidNode.awsService({ id: 'scraper', service: AwsService
 const DATABASE_NODE = MermaidNode.awsService({ id: 'database', service: AwsService.Rds, label: 'Production database' });
 const TRIGGER_NODE = MermaidNode.awsService({ id: 'schedule', service: AwsService.EventBridge, label: 'Scheduled Event Trigger', nodeShape: 'rounded' });
 const PAGE_QUEUE_NODE = MermaidNode.awsService({ id: 'pageQueue', service: AwsService.Sqs, label: 'RopewikiPageProcessingQueue' });
-const PAGE_PROCESSOR_NODE = MermaidNode.awsService({ id: 'pageProcessor', service: AwsService.Lambda, label: 'RopewikiPageProcessor', nodeShape: 'st-rect' });
+const PAGE_PROCESSOR_NODE = MermaidNode.awsService({ id: 'pageProcessor', service: AwsService.Lambda, label: 'RopewikiPageProcessor', nodeShape: 'st-rect', pageLink: '/documentation/ropewikipageprocessor.html' });
 const MAP_DATA_QUEUE_NODE = MermaidNode.awsService({ id: 'mapQueue', service: AwsService.Sqs, label: 'MapDataProcessingQueue' });
 const MAP_DATA_PROCESSOR_NODE = MermaidNode.awsService({ id: 'mapProcessor', service: AwsService.Lambda, label: 'MapDataProcessor', nodeShape: 'st-rect' });
 
-const FLOWCHART = `
+function buildFlowchart(): string {
+    MermaidNode.resetStyleRegistry();
+    const chart = `
 flowchart TB
     ${ROPEWIKI_API_NODE} <--> ${PROXY_NODE}
     ${PROXY_NODE} <----> ${SCRAPER_NODE}
@@ -107,9 +109,10 @@ flowchart TB
     style webScraper fill:transparent,stroke:#ffffff,color:#ffffff
     style pageProcessing fill:transparent,stroke:#ffffff,color:#ffffff
     style mapProcessing fill:transparent,stroke:#ffffff,color:#ffffff
-
-    
 `;
+    const styleAppendix = MermaidNode.formatStyleAppendix();
+    return styleAppendix ? `${chart}\n${styleAppendix}` : chart;
+}
 
 const OVERVIEW_PARAGRAPHS: RichParagraph[] = [
     [
@@ -199,7 +202,7 @@ export function RopewikiScraperPage() {
                         />
                     ))}
 
-                    <MermaidDiagram chart={FLOWCHART} />
+                    <MermaidDiagram chart={buildFlowchart()} />
                 </View>
 
                 <View style={styles.section}>

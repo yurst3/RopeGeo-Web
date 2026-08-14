@@ -18,6 +18,7 @@ const spaRoutes = [
     'privacy',
     'documentation',
     'documentation/ropewikiscraper',
+    'documentation/ropewikipageprocessor',
 ];
 
 for (const route of spaRoutes) {
