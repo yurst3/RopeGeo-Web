@@ -19,6 +19,7 @@ const spaRoutes = [
     'documentation',
     'documentation/ropewikiscraper',
     'documentation/ropewikipageprocessor',
+    'documentation/mapdataprocessor',
 ];
 
 for (const route of spaRoutes) {

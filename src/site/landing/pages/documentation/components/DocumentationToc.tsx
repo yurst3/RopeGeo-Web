@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { darkTheme as colors } from '../../../constants/darkTheme';
 import {
     openDocumentationSection,
+    openMapDataProcessorDocumentation,
     openRopewikiPageProcessorDocumentation,
     openRopewikiScraperDocumentation,
     scrollToSection,
@@ -11,7 +12,8 @@ import {
 export type DocumentationTocPageId =
     | 'documentation'
     | 'ropewikiscraper'
-    | 'ropewikipageprocessor';
+    | 'ropewikipageprocessor'
+    | 'mapdataprocessor';
 
 type TocEntry = {
     id: string;
@@ -39,6 +41,13 @@ const TOC_ENTRIES: TocEntry[] = [
         kind: 'page',
         indent: true,
         openPage: openRopewikiPageProcessorDocumentation,
+    },
+    {
+        id: 'mapdataprocessor',
+        name: 'MapDataProcessor',
+        kind: 'page',
+        indent: true,
+        openPage: openMapDataProcessorDocumentation,
     },
     { id: 'common', name: 'Common', kind: 'section' },
     { id: 'web', name: 'Web', kind: 'section' },

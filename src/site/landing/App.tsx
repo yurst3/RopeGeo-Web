@@ -1,4 +1,5 @@
 import { DocumentationPage } from './pages/documentation/DocumentationPage';
+import { MapDataProcessorPage } from './pages/documentation/MapDataProcessorPage';
 import { RopewikiPageProcessorPage } from './pages/documentation/RopewikiPageProcessorPage';
 import { RopewikiScraperPage } from './pages/documentation/RopewikiScraperPage';
 import { LandingPage } from './pages/landing/LandingPage';
@@ -22,6 +23,10 @@ export default function App() {
 
     if (route === 'documentation-ropewikipageprocessor') {
         return <RopewikiPageProcessorPage />;
+    }
+
+    if (route === 'documentation-mapdataprocessor') {
+        return <MapDataProcessorPage />;
     }
 
     return <LandingPage />;

@@ -11,6 +11,7 @@ export enum AwsService {
     Lambda = 'Lambda',
     Sqs = 'Sqs',
     Rds = 'Rds',
+    S3 = 'S3',
 }
 
 type AwsServiceStyle = {
@@ -91,6 +92,10 @@ export class MermaidNode {
         [AwsService.Rds]: {
             iconName: 'aws-rds',
             nodeShape: 'cyl',
+        },
+        [AwsService.S3]: {
+            iconName: 'aws-s3',
+            nodeShape: 'docs',
         },
     };
 

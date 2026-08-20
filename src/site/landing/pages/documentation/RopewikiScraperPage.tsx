@@ -82,7 +82,7 @@ const TRIGGER_NODE = MermaidNode.awsService({ id: 'schedule', service: AwsServic
 const PAGE_QUEUE_NODE = MermaidNode.awsService({ id: 'pageQueue', service: AwsService.Sqs, label: 'RopewikiPageProcessingQueue' });
 const PAGE_PROCESSOR_NODE = MermaidNode.awsService({ id: 'pageProcessor', service: AwsService.Lambda, label: 'RopewikiPageProcessor', nodeShape: 'st-rect', pageLink: '/documentation/ropewikipageprocessor.html' });
 const MAP_DATA_QUEUE_NODE = MermaidNode.awsService({ id: 'mapQueue', service: AwsService.Sqs, label: 'MapDataProcessingQueue' });
-const MAP_DATA_PROCESSOR_NODE = MermaidNode.awsService({ id: 'mapProcessor', service: AwsService.Lambda, label: 'MapDataProcessor', nodeShape: 'st-rect' });
+const MAP_DATA_PROCESSOR_NODE = MermaidNode.awsService({ id: 'mapProcessor', service: AwsService.Lambda, label: 'MapDataProcessor', nodeShape: 'st-rect', pageLink: '/documentation/mapdataprocessor.html' });
 
 function buildFlowchart(): string {
     MermaidNode.resetStyleRegistry();

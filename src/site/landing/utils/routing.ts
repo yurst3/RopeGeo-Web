@@ -3,7 +3,8 @@ export type WebRoute =
     | 'privacy'
     | 'documentation'
     | 'documentation-ropewikiscraper'
-    | 'documentation-ropewikipageprocessor';
+    | 'documentation-ropewikipageprocessor'
+    | 'documentation-mapdataprocessor';
 
 export function getWebRoute(): WebRoute {
     if (typeof window === 'undefined') {
@@ -36,6 +37,15 @@ export function getWebRoute(): WebRoute {
         path.endsWith('/documentation/ropewikipageprocessor/index.html')
     ) {
         return 'documentation-ropewikipageprocessor';
+    }
+
+    if (
+        path === '/documentation/mapdataprocessor' ||
+        path === '/documentation/mapdataprocessor/' ||
+        path === '/documentation/mapdataprocessor.html' ||
+        path.endsWith('/documentation/mapdataprocessor/index.html')
+    ) {
+        return 'documentation-mapdataprocessor';
     }
 
     if (
@@ -77,6 +87,12 @@ export function openRopewikiScraperDocumentation() {
 export function openRopewikiPageProcessorDocumentation() {
     if (typeof window !== 'undefined') {
         window.location.href = '/documentation/ropewikipageprocessor.html';
+    }
+}
+
+export function openMapDataProcessorDocumentation() {
+    if (typeof window !== 'undefined') {
+        window.location.href = '/documentation/mapdataprocessor.html';
     }
 }
 
